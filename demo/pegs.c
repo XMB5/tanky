@@ -19,7 +19,7 @@
 
 #define PEG_RADIUS 0.5
 #define BALL_RADIUS 1.0
-#define DROP_INTERVAL 1.0 // s
+#define DROP_INTERVAL 1 // s
 #define PEG_ELASTICITY 0.3
 #define BALL_ELASTICITY 0.7
 #define WALL_WIDTH 1.0
@@ -241,35 +241,42 @@ void add_walls(scene_t *scene) {
     scene_add_body(scene, body);
 }
 
-int main(void) {
-    // Initialize the random number generator
-    srand(time(NULL));
+typedef struct state {
+    scene_t *scene;
+    double time_since_drop;
+} state_t;
 
+state_t *emscripten_init(void) {
+    srand(time(NULL));
     // Initialize scene
     sdl_init(VEC_ZERO, MAX);
     scene_t *scene = scene_init();
-
     // Add elements to the scene
     add_gravity_body(scene);
     add_pegs(scene);
     add_walls(scene);
-
     // Repeatedly render scene
     double time_since_drop = INFINITY;
-    while (!sdl_is_done(scene)) {
-        double dt = time_since_last_tick();
 
-        // Add a new ball every DROP_INTERVAL seconds
-        time_since_drop += dt;
-        if (time_since_drop > DROP_INTERVAL) {
-            add_ball(scene);
-            time_since_drop = 0.0;
-        }
+    state_t *state = malloc(sizeof(state_t));
+    state->scene = scene;
+    state->time_since_drop = time_since_drop;
+    return state;
+}
 
-        scene_tick(scene, dt);
-        sdl_render_scene(scene);
+void emscripten_main(state_t *state) {
+    double dt = time_since_last_tick();
+    // Add a new ball every DROP_INTERVAL seconds
+    state->time_since_drop += dt;
+    if (state->time_since_drop > DROP_INTERVAL) {
+        add_ball(state->scene);
+        state->time_since_drop = 0.0;
     }
+    scene_tick(state->scene, dt);
+    sdl_render_scene(state->scene);
+}
 
-    // Clean up scene
-    scene_free(scene);
+void emscripten_free(state_t *state) {
+    scene_free(state->scene);
+    free(state);
 }
