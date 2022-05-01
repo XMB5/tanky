@@ -1,13 +1,33 @@
 # List of demo programs
-DEMOS = bounce gravity pacman nbodies damping spaceinvaders
+DEMOS = bounce gravity pacman nbodies damping spaceinvaders pegs breakout
 # List of C files in "libraries" that we provide
-STAFF_LIBS = test_util sdl_wrapper
+STAFF_LIBS = test_util sdl_wrapper emscripten
 # List of C files in "libraries" that you will write.
 # This also defines the order in which the tests are run.
-STUDENT_LIBS = vector list polygon color body scene forces collision
+STUDENT_LIBS = list vector polygon body scene forces collision
 
-# If we're not on Windows...
-ifneq ($(OS), Windows_NT)
+# find <dir> is the command to find files in a directory
+# ! -name .gitignore tells find to ignore the .gitignore
+# -type f only finds files
+# -delete deletes all the files found
+CLEAN_COMMAND = find out/ ! -name .gitignore -type f -delete && \
+find bin/ ! -name .gitignore -type f -delete
+
+# Compiling with asan (run 'make all' as normal)
+ifndef NO_ASAN
+  CFLAGS = -fsanitize=address
+  ifeq ($(wildcard .debug),)
+    $(shell $(CLEAN_COMMAND))
+    $(shell touch .debug)
+  endif
+# Compiling without asan (run 'make NO_ASAN=true all')
+else
+  CFLAGS = -O3
+  ifneq ($(wildcard .debug),)
+    $(shell $(CLEAN_COMMAND))
+    $(shell rm -f .debug)
+  endif
+endif
 
 # Use clang as the C compiler
 CC = clang
@@ -17,30 +37,53 @@ CC = clang
 # -g adds filenames and line numbers to the executable for useful stack traces
 # -fno-omit-frame-pointer allows stack traces to be generated
 #   (take CS 24 for a full explanation)
-# -fsanitize=address enables asan
-CFLAGS = -Iinclude $(shell sdl2-config --cflags | sed -e "s/include\/SDL2/include/") -Wall -g -fno-omit-frame-pointer -fsanitize=address -Wno-nullability-completeness
+CFLAGS += -Iinclude $(shell sdl2-config --cflags) -Wall -g -fno-omit-frame-pointer
+
+# Emscripten compilation section
+# Flags to pass to emcc:
+# -s EXIT_RUNTIME=1 shuts the program down properly
+# -s ALLOW_MEMORY_GROWTH=1 allows for dynamic memory usage
+# -s INITIAL_MEMORY sets the initial amount of memory
+# -s USE_SDL=2 ports the sdl library.
+# Other SDL ports are also included, like image and mixer
+# -s ASSERTIONS=1 enables runtime checks for allocation errors
+# -O2 specifies to compile the code with full optimizations. When debugging, you can change to O0 to step through code
+# -g enables DWARF support, for debugging purposes
+# -gsource-map --source-map-base http://localhost:8000/bin/ creates a source map from the C file for debugging
+EMCC = emcc
+EMCC_FLAGS = -s EXIT_RUNTIME=1 -s ALLOW_MEMORY_GROWTH=1 -s INITIAL_MEMORY=655360000 -s USE_SDL=2 -s USE_SDL_GFX=2 -s USE_SDL_IMAGE=2 -s SDL2_IMAGE_FORMATS='["png"]' -s USE_SDL_TTF=2 -s USE_SDL_MIXER=2 -s ASSERTIONS=1 -O2 -g -gsource-map --source-map-base http://labradoodle.caltech.edu:$(shell cs3-port)/bin/
+
 # Compiler flag that links the program with the math library
 LIB_MATH = -lm
-# Compiler flags that link the program with the math and SDL libraries.
+# Compiler flags that link the program with the math library
 # Note that $(...) substitutes a variable's value, so this line is equivalent to
-# LIBS = -lm -lSDL2 -lSDL2_gfx
+# LIBS = -lm
 LIBS = $(LIB_MATH) $(shell sdl2-config --libs) -lSDL2_gfx
 
 # List of compiled .o files corresponding to STUDENT_LIBS, e.g. "out/vector.o".
 # Don't worry about the syntax; it's just adding "out/" to the start
 # and ".o" to the end of each value in STUDENT_LIBS.
 STUDENT_OBJS = $(addprefix out/,$(STUDENT_LIBS:=.o))
+# List of compiled wasm.o files corresponding to STUDENT_LIBS
+# Similarly to above, we add .wasm.o to the end of each value in STUDENT_LIBS
+WASM_STUDENT_OBJS = $(addprefix out/,$(STUDENT_LIBS:=.wasm.o))
+
 # List of test suite executables, e.g. "bin/test_suite_vector"
 TEST_BINS = $(addprefix bin/test_suite_,$(STUDENT_LIBS))
-# List of demo executables, i.e. "bin/bounce".
-DEMO_BINS = $(addprefix bin/,$(DEMOS))
-# All executables (the concatenation of TEST_BINS and DEMO_BINS)
-BINS = $(TEST_BINS) $(DEMO_BINS)
+# List of demo executables, i.e. "bin/bounce.html".
+DEMO_BINS = $(addsuffix .html, $(addprefix bin/,$(DEMOS)))
 
-# The first Make rule. It is relatively simple:
-# "To build 'all', make sure all files in BINS are up to date."
+# The first Make rule. It is relatively simple
+# It builds the files in TEST_BINS and DEMO_BINS, as well as making the server for the demos
+# "To build 'all', make sure all files in TEST_BINS and DEMO_BINS are up to date."
 # You can execute this rule by running the command "make all", or just "make".
-all: $(BINS)
+all: $(TEST_BINS) $(DEMO_BINS) server
+
+# Make the python server for your demos
+# To run this, type 'make server'
+server:
+	@echo "Go to \033[0;32mhttp://labradoodle.caltech.edu:$(shell cs3-port)/bin/\033[0m to access your demo!" && \
+	python3 -m http.server $(shell cs3-port) | grep -v "Serving HTTP"
 
 # Any .o file in "out" is built from the corresponding C file.
 # Although .c files can be directly compiled into an executable, first building
@@ -60,34 +103,28 @@ out/%.o: demo/%.c # or "demo"
 out/%.o: tests/%.c # or "tests"
 	$(CC) -c $(CFLAGS) $^ -o $@
 
-# Builds bin/bounce by linking the necessary .o files.
-# Unlike the out/%.o rule, this uses the LIBS flags and omits the -c flag,
-# since it is building a full executable.
-bin/bounce: out/bounce.o out/sdl_wrapper.o $(STUDENT_OBJS)
-	$(CC) $(CFLAGS) $(LIBS) $^ -o $@
+# Emscripten compilation flags
+# This is very similar to the above compilation, except for emscripten
+out/%.wasm.o: library/%.c # source file may be found in "library"
+	$(EMCC) -c $(CFLAGS) $^ -o $@
+out/%.wasm.o: demo/%.c # or "demo"
+	$(EMCC) -c $(CFLAGS) $^ -o $@
+out/%.wasm.o: tests/%.c # or "tests"
+	$(EMCC) -c $(CFLAGS) $^ -o $@
 
-bin/gravity: out/gravity.o out/sdl_wrapper.o $(STUDENT_OBJS)
-	$(CC) $(CFLAGS) $(LIBS) $^ -o $@
-
-bin/pacman: out/pacman.o out/sdl_wrapper.o $(STUDENT_OBJS)
-	$(CC) $(CFLAGS) $(LIBS) $^ -o $@
-
-bin/nbodies: out/nbodies.o out/sdl_wrapper.o $(STUDENT_OBJS)
-	$(CC) $(CFLAGS) $(LIBS) $^ -o $@
-
-bin/damping: out/damping.o out/sdl_wrapper.o $(STUDENT_OBJS)
-		$(CC) $(CFLAGS) $(LIBS) $^ -o $@
-
-bin/spaceinvaders: out/spaceinvaders.o out/sdl_wrapper.o $(STUDENT_OBJS)
-		$(CC) $(CFLAGS) $(LIBS) $^ -o $@
+# Builds bin/%.html by linking the necessary .wasm.o files.
+# Unlike the out/%.wasm.o rule, this uses the LIBS flags and omits the -c flag,
+# since it is building a full executable. Also notice it uses our EMCC_FLAGS
+bin/%.html: out/emscripten.wasm.o out/%.wasm.o out/sdl_wrapper.wasm.o $(WASM_STUDENT_OBJS)
+		$(EMCC) $(EMCC_FLAGS) $(CFLAGS) $(LIBS) $^ -o $@
 
 # Builds the test suite executables from the corresponding test .o file
 # and the library .o files. The only difference from the demo build command
 # is that it doesn't link the SDL libraries.
-bin/test_suite_%: out/test_suite_%.o out/test_util.o $(STUDENT_OBJS)
-	$(CC) $(CFLAGS) $(LIB_MATH) $^ -o $@
+bin/test_suite_%: out/test_suite_%.o out/test_util.o out/sdl_wrapper.o $(STUDENT_OBJS) $(STAFF_OBJS)
+	$(CC) $(CFLAGS) $(LIBS) $^ -o $@
 
-
+# Builds the test suite executable for the student tests
 bin/student_tests: out/student_tests.o out/test_util.o $(STUDENT_OBJS)
 	$(CC) $(CFLAGS) $(LIB_MATH) $^ -o $@
 
@@ -104,164 +141,13 @@ test: $(TEST_BINS)
 	set -e; for f in $(TEST_BINS); do echo $$f; $$f; echo; done
 
 # Removes all compiled files.
-# find <dir> is the command to find files in a directory
-# ! -name .gitignore tells find to ignore the .gitignore
-# -type f only finds files
-# -delete deletes all the files found
 clean:
-	find out/ ! -name .gitignore -type f -delete && \
-	find bin/ ! -name .gitignore -type f -delete
+	$(CLEAN_COMMAND)
 
 # This special rule tells Make that "all", "clean", and "test" are rules
 # that don't build a file.
 .PHONY: all clean test
 # Tells Make not to delete the .o files after the executable is built
 .PRECIOUS: out/%.o
-
-# Windows is _special_
-# Define a completely separate set of rules, because syntax and shell
-else
-
-# Make normally uses sh, which isn't on Windows by default
-# Some systems might have it though...
-# So, explicitly use cmd (ew)
-# I want to rewrite the test and clean portions in Powershell but
-# don't have the time now.
-SHELL = cmd.exe
-
-# Use MSVC cl.exe as the C compiler
-CC = cl.exe
-
-# Flags to pass to cl.exe:
-# -I"C:/Users/$(USERNAME)/msvc/include"
-#	- include files that would normally be in /usr/include or something
-# -Iinclude = -Iinclude
-# -Zi = -g (with debug info in a separate file)
-# -W3 turns on warnings (W4 is overkill for this class)
-# -Oy- = -fno-omit-frame-pointer. May be unnecessary.
-# -fsanitize=address = ...
-CFLAGS := -I"C:/Users/$(USERNAME)/msvc/include"
-CFLAGS += -Iinclude -Zi -W3 -Oy-
-# You may want to turn this off for certain types of debugging.
-CFLAGS += -fsanitize=address
-
-# Define _WIN32, telling the programs that they are running on Windows.
-CFLAGS += -D_WIN32
-# Math constants are not in the standard
-CFLAGS += -D_USE_MATH_DEFINES
-# Some functions are """unsafe""", like snprintf. We don't care.
-CFLAGS += -D_CRT_SECURE_NO_WARNINGS
-# Include the full path for the msCompile problem matcher
-C_FLAGS += -FC
-
-# Libraries that we are linking against.
-# Note that a lot of the base Windows ones are missing - the
-# libraries I've distributed are _dynamically linked_, because otherwise,
-# we'd need to manually link a lot of crap.
-LIBS = SDL2main.lib SDL2.lib SDL2_gfx.lib shell32.lib
-
-# Tell cl to look for lib files in this folder
-LINKEROPTS = -LIBPATH:"C:/Users/$(USERNAME)/msvc/lib"
-# If SDL2 is included in a file with main, it takes over main with its own def.
-# We need to explicitly indicate the application type.
-# NOTE: CONSOLE is single-threaded. Multithreading needs to use WINDOWS.
-LINKEROPTS += -SUBSYSTEM:CONSOLE
-# WHY IS LNK4098 HAPPENING (no ill effects from brief checks)
-LINKEROPTS += -NODEFAULTLIB:msvcrt.lib
-
-# List of compiled .obj files corresponding to STUDENT_LIBS,
-# e.g. "out/vector.obj".
-# Don't worry about the syntax; it's just adding "out/" to the start
-# and ".obj" to the end of each value in STUDENT_LIBS.
-STUDENT_OBJS = $(addprefix out/,$(STUDENT_LIBS:=.obj))
-# List of test suite executables, e.g. "bin/test_suite_vector.exe"
-TEST_BINS = $(addsuffix .exe,$(addprefix bin/test_suite_,$(STUDENT_LIBS)))
-# List of demo executables, i.e. "bin/bounce.exe".
-DEMO_BINS = $(addsuffix .exe,$(addprefix bin/,$(DEMOS)))
-# All executables (the concatenation of TEST_BINS and DEMO_BINS)
-BINS = $(TEST_BINS) $(DEMO_BINS)
-
-# The first Make rule. It is relatively simple:
-# "To build 'all', make sure all files in BINS are up to date."
-# You can execute this rule by running the command "make all", or just "make".
-all: $(BINS)
-
-# Any .o file in "out" is built from the corresponding C file.
-# Although .c files can be directly compiled into an executable, first building
-# .o files reduces the amount of work needed to rebuild the executable.
-# For example, if only list.c was modified since the last build, only list.o
-# gets recompiled, and clang reuses the other .o files to build the executable.
-#
-# "%" means "any string".
-# Unlike "all", this target has a build command.
-# "$^" is a special variable meaning "the source files"
-# and $@ means "the target file", so the command tells clang
-# to compile the source C file into the target .obj file. (via -Fo)
-out/%.obj: library/%.c # source file may be found in "library"
-	$(CC) -c $^ $(CFLAGS) -Fo"$@"
-out/%.obj: demo/%.c # or "demo"
-	$(CC) -c $^ $(CFLAGS) -Fo"$@"
-out/%.obj: tests/%.c # or "tests"
-	$(CC) -c $^ $(CFLAGS) -Fo"$@"
-
-bin/bounce.exe bin\bounce.exe: out/bounce.obj out/sdl_wrapper.obj $(STUDENT_OBJS)
-	$(CC) $^ $(CFLAGS) -link $(LINKEROPTS) $(LIBS) -out:"$@"
-
-bin/gravity.exe bin\gravity.exe: out/gravity.obj out/sdl_wrapper.obj $(STUDENT_OBJS)
-	$(CC) $^ $(CFLAGS) -link $(LINKEROPTS) $(LIBS) -out:"$@"
-
-bin/pacman.exe bin\pacman.exe: out/pacman.obj out/sdl_wrapper.obj $(STUDENT_OBJS)
-	$(CC) $^ $(CFLAGS) -link $(LINKEROPTS) $(LIBS) -out:"$@"
-
-bin/nbodies.exe: out/nbodies.obj out/sdl_wrapper.obj $(STUDENT_OBJS)
-	$(CC) $^ $(CFLAGS) -link $(LINKEROPTS) $(LIBS) -out:"$@"
-
-bin/damping.exe: out/damping.obj out/sdl_wrapper.obj $(STUDENT_OBJS)
-	$(CC) $^ $(CFLAGS) -link $(LINKEROPTS) $(LIBS) -out:"$@"
-
-bin/spaceinvaders.exe: out/spaceinvaders.obj out/sdl_wrapper.obj $(STUDENT_OBJS)
-	$(CC) $^ $(CFLAGS) -link $(LINKEROPTS) $(LIBS) -out:"$@"
-
-# Builds the test suite executables from the corresponding test .o file
-# and the library .o files. The only difference from the demo build command
-# is that it doesn't link the SDL libraries.
-bin/test_suite_%.exe bin\test_suite_%.exe: out/test_suite_%.obj out/test_util.obj $(STUDENT_OBJS)
-	$(CC) $^ $(CFLAGS) -link $(LINKEROPTS) -out:"$@"
-
-# Empty recipes for cross-OS task compatibility.
-bin/bounce bin\bounce: bin/bounce.exe ;
-bin/gravity bin\gravity: bin/gravity.exe ;
-bin/pacman bin\pacman: bin/pacman.exe ;
-bin/nbodies bin\nbodies: bin/nbodies.exe; 
-bin/damping bin\damping: bin/damping.exe; 
-bin/spaceinvaders bin\spaceinvaders: bin/spaceinvaders.exe
-bin/test_suite_% bin\test_suite_%: bin/test_suite_%.exe ;
-
-# CMD commands to test and clean
-
-bin/student_tests.exe: out/student_tests.obj out/test_util.obj $(STUDENT_OBJS)
-	$(CC) $(CFLAGS) $(LIB_MATH) $^ -o $@
-
-# "$(subst /,\, $(TEST_BINS))" replaces "/" with "\" for
-#	Windows paths,
-# "echo %%i.exe" prints the test suite,
-# "cmd /c %%i.exe" runs the test,
-# "|| exit /b" causes the session to exit if any of the tests fail,
-# "echo." prints a newline.
-test: $(TEST_BINS)
-	for %%i in ($(subst /,\, $(TEST_BINS))) \
-	do ((echo %%i) && ((cmd /c %%i) || exit /b) && (echo.))
-
-# Explicitly iterate on files in out\* and bin\*, and
-# delete if it's not .gitignore
-clean:
-	for %%i in (out\* bin\*) \
-	do (if not "%%~xi" == ".gitignore" del %%~i)
-
-# This special rule tells Make that "all", "clean", and "test" are rules
-# that don't build a file.
-.PHONY: all clean test
-# Tells Make not to delete the .obj files after the executable is built
-.PRECIOUS: out/%.obj
-
-endif
+# Tells Make not to delete the wasm.o files after the executable is built
+.PRECIOUS: out/%.wasm.o
