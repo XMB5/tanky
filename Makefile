@@ -51,7 +51,7 @@ CFLAGS += -Iinclude $(shell sdl2-config --cflags) -Wall -g -fno-omit-frame-point
 # -g enables DWARF support, for debugging purposes
 # -gsource-map --source-map-base http://localhost:8000/bin/ creates a source map from the C file for debugging
 EMCC = emcc
-EMCC_FLAGS = -s EXIT_RUNTIME=1 -s ALLOW_MEMORY_GROWTH=1 -s INITIAL_MEMORY=655360000 -s USE_SDL=2 -s USE_SDL_GFX=2 -s USE_SDL_IMAGE=2 -s SDL2_IMAGE_FORMATS='["png"]' -s USE_SDL_TTF=2 -s USE_SDL_MIXER=2 -s ASSERTIONS=1 -O2 -g -gsource-map --source-map-base http://labradoodle.caltech.edu:$(shell cs3-port)/bin/
+EMCC_FLAGS = -s EXIT_RUNTIME=1 -s ALLOW_MEMORY_GROWTH=1 -s INITIAL_MEMORY=655360000 -s USE_SDL=2 -s USE_SDL_GFX=2 -s USE_SDL_IMAGE=2 -s SDL2_IMAGE_FORMATS='["png"]' -s USE_SDL_TTF=2 -s USE_SDL_MIXER=2 -s ASSERTIONS=1 -O2 -g -gsource-map --source-map-base http://labradoodle.caltech.edu:$(shell cs3-port)/bin/ --preload-file assets --use-preload-plugins
 
 # Compiler flag that links the program with the math library
 LIB_MATH = -lm
