@@ -1,7 +1,6 @@
 #include <body.h>
 #include <collision.h>
 #include <color.h>
-#include <emscripten.h>
 #include <forces.h>
 #include <scene.h>
 #include <sdl_wrapper.h>
