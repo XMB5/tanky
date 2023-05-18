@@ -20,16 +20,19 @@ static const vector_t BULLET_SIZE = {20.0, 10.0};
 static const double BULLET_MASS = 1.0;
 static const vector_t BULLET_INITIAL_VEL = {250.0, -400.0};
 static const rgb_color_t BULLET_COLOR = {1.0, 1.0, 0.0};
-static const uint8_t BULLET_INFO = 0; // address of BULLET_INFO specifies body is a bullet
+static const uint8_t BULLET_INFO =
+    0; // address of BULLET_INFO specifies body is a bullet
 
 static const vector_t TANK_SIZE = {100.0, 30.0};
 static const double TANK_SPEED = 500.0; // pixels/s
 
 static const vector_t TANK1_INITIAL_POSITION = {20.0, 450.0};
-static const uint8_t TANK1_INFO = 0; // address of TANK1_INFO specifies body is TANK1
+static const uint8_t TANK1_INFO =
+    0; // address of TANK1_INFO specifies body is TANK1
 
 static const vector_t TANK2_INITIAL_POSITION = {950.0, 20.0};
-static const uint8_t TANK2_INFO = 0; // address of TANK2_INFO specifies body is TANK2
+static const uint8_t TANK2_INFO =
+    0; // address of TANK2_INFO specifies body is TANK2
 
 static const double ELASTICITY = 1.0;
 
@@ -37,7 +40,7 @@ static const size_t POINTS_PER_BULLET = 1;
 
 struct tank {
   body_t *body;
-  list_t *health;  // list of bodies that represent health bar
+  list_t *health; // list of bodies that represent health bar
   list_t *powerups;
   bool just_shot;
   // image that correspondes to tank
@@ -60,9 +63,8 @@ struct state {
   map_t *map;
   tank_t *tank_1;
   tank_t *tank_2;
-  list_t *bullets;  // list of bullet_t bullets
+  list_t *bullets; // list of bullet_t bullets
 };
-
 
 static void brick_collision_handler(body_t *brick, body_t *ball, vector_t axis,
                                     state_t *state) {
@@ -125,20 +127,22 @@ state_t *emscripten_init() {
   // ceiling
   body_t *walls[] = {
       body_init_with_info(
-          shape_rectangle((vector_t){SCREEN_SIZE.x, EXTERIOR_WALL_THICKNESS}), INFINITY,
-          COLOR_WHITE, NULL, NULL),
+          shape_rectangle((vector_t){SCREEN_SIZE.x, EXTERIOR_WALL_THICKNESS}),
+          INFINITY, COLOR_WHITE, NULL, NULL),
       body_init_with_info(
-          shape_rectangle((vector_t){EXTERIOR_WALL_THICKNESS, SCREEN_SIZE.y}), INFINITY,
-          COLOR_WHITE, NULL, NULL),
+          shape_rectangle((vector_t){EXTERIOR_WALL_THICKNESS, SCREEN_SIZE.y}),
+          INFINITY, COLOR_WHITE, NULL, NULL),
       body_init_with_info(
-          shape_rectangle((vector_t){EXTERIOR_WALL_THICKNESS, SCREEN_SIZE.y}), INFINITY,
-          COLOR_WHITE, NULL, NULL)};
-  body_set_centroid(walls[0], (vector_t){SCREEN_SIZE.x / 2.0,
-                                         SCREEN_SIZE.y + EXTERIOR_WALL_THICKNESS / 2.0});
-  body_set_centroid(walls[1],
-                    (vector_t){-EXTERIOR_WALL_THICKNESS / 2.0, SCREEN_SIZE.y / 2.0});
-  body_set_centroid(walls[2], (vector_t){SCREEN_SIZE.x + EXTERIOR_WALL_THICKNESS / 2.0,
+          shape_rectangle((vector_t){EXTERIOR_WALL_THICKNESS, SCREEN_SIZE.y}),
+          INFINITY, COLOR_WHITE, NULL, NULL)};
+  body_set_centroid(walls[0],
+                    (vector_t){SCREEN_SIZE.x / 2.0,
+                               SCREEN_SIZE.y + EXTERIOR_WALL_THICKNESS / 2.0});
+  body_set_centroid(walls[1], (vector_t){-EXTERIOR_WALL_THICKNESS / 2.0,
                                          SCREEN_SIZE.y / 2.0});
+  body_set_centroid(walls[2],
+                    (vector_t){SCREEN_SIZE.x + EXTERIOR_WALL_THICKNESS / 2.0,
+                               SCREEN_SIZE.y / 2.0});
 
   const size_t num_walls = 3;
   for (size_t i = 0; i < num_walls; i++) {
