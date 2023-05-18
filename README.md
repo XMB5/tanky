@@ -1,1 +1,1 @@
-In addition to completing the project, each member of your group will need to submit the Qualtrics form before the deadline! Link here: https://caltech.az1.qualtrics.com/jfe/form/SV_6imPeo1nHVGhSK2
+Tanky: An exhilarating two-player tank battle game with a physics engine, set in an environment full of obstacles and power-ups.
