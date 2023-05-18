@@ -38,7 +38,33 @@ static const double ELASTICITY = 1.0;
 
 static const size_t POINTS_PER_BULLET = 1;
 
-struct tank {
+// old stuff for compiling
+static const vector_t BRICK_SIZE = {89, 30};
+static const vector_t BRICK_TOP_LEFT = {55, 475};
+static const vector_t BRICK_SPACING = {99, 40};
+static const size_t BRICK_COLS = 10;
+static const size_t BRICK_ROWS = 3;
+static const uint8_t BRICK_INFO =
+    0; // address of BRICK_INFO specifies body is a brick
+
+static const double BALL_RADIUS = 10;
+static const double BALL_MASS = 10.0;
+static const double BALL_Y = 67;
+static const vector_t BALL_INITIAL_VEL = {250.0, -400.0};
+
+static const vector_t PLAYER_SIZE = {100.0, 30.0};
+static const double PLAYER_Y = 30.0;
+static const double PLAYER_SPEED = 500.0; // pixels/s
+
+static const double BULLET_Y = 80;
+static const double BULLET_RADIUS = 20.0;
+static const double BULLET_MASS = 5.0;
+static const vector_t BULLET_VELOCITY = {0.0, 200.0};
+
+
+
+
+typedef struct tank {
   body_t *body;
   list_t *health; // list of bodies that represent health bar
   list_t *powerups;
@@ -47,13 +73,13 @@ struct tank {
   size_t points;
 } tank_t;
 
-struct bullet {
+typedef struct bullet {
   body_t *body;
   uint8_t target;
   uint8_t owner;
 } bullet_t;
 
-struct map {
+typedef struct map {
   list_t *walls;
   list_t *obstacles;
 } map_t;
@@ -64,6 +90,14 @@ struct state {
   tank_t *tank_1;
   tank_t *tank_2;
   list_t *bullets; // list of bullet_t bullets
+
+  // old stuff for compiling
+  body_t *player;
+  body_t *ball;
+  bool just_shot;
+  size_t bricks_killed;
+  size_t points; // carry over between rounds
+
 };
 
 static void brick_collision_handler(body_t *brick, body_t *ball, vector_t axis,
