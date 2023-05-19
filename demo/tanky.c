@@ -58,11 +58,7 @@ static const double PLAYER_SPEED = 500.0; // pixels/s
 
 static const double BULLET_Y = 80;
 static const double BULLET_RADIUS = 20.0;
-static const double BULLET_MASS = 5.0;
 static const vector_t BULLET_VELOCITY = {0.0, 200.0};
-
-
-
 
 typedef struct tank {
   body_t *body;
@@ -97,7 +93,6 @@ struct state {
   bool just_shot;
   size_t bricks_killed;
   size_t points; // carry over between rounds
-
 };
 
 static void brick_collision_handler(body_t *brick, body_t *ball, vector_t axis,
