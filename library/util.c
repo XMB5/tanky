@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <stdlib.h>
-#include <util.h>
 #include <string.h>
+#include <util.h>
 
 const double PI = 3.1415926535897932384626433832795;
 
@@ -24,6 +24,6 @@ double rand_range(double min, double max) {
 const char *strdup_safe(const char *str) {
   size_t str_len = strlen(str);
   const char *new = malloc_safe(str_len + 1);
-  memcpy(new, str, str_len + 1);
+  memcpy((void *)new, str, str_len + 1);
   return new;
 }
