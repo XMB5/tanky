@@ -56,7 +56,8 @@ LIB_MATH = -lm
 # Compiler flags that link the program with the math library
 # Note that $(...) substitutes a variable's value, so this line is equivalent to
 # LIBS = -lm
-LIBS = $(LIB_MATH) $(shell sdl2-config --libs) -lSDL2_gfx -lSDL2_image
+LIBS = $(LIB_MATH) $(shell sdl2-config --libs) -lSDL2_gfx
+LIBS_NATIVE_ONLY = -lSDL2_image
 
 # List of compiled .o files corresponding to STUDENT_LIBS, e.g. "out/vector.o".
 # Don't worry about the syntax; it's just adding "out/" to the start
@@ -76,7 +77,7 @@ DEMO_BINS_NATIVE = bin/tanky
 # It builds the files in TEST_BINS and DEMO_BINS, as well as making the server for the demos
 # "To build 'all', make sure all files in TEST_BINS and DEMO_BINS are up to date."
 # You can execute this rule by running the command "make all", or just "make".
-all: $(TEST_BINS) $(DEMO_BINS) server
+all: $(DEMO_BINS) server
 
 native: $(DEMO_BINS_NATIVE)
 
@@ -119,7 +120,7 @@ out/%.wasm.o: tests/%.c # or "tests"
 bin/%.html: out/emscripten.wasm.o out/%.wasm.o out/sdl_wrapper.wasm.o $(WASM_STUDENT_OBJS)
 		$(EMCC) $(EMCC_FLAGS) $(CFLAGS) $(LIBS) $^ -o $@
 bin/tanky: out/emscripten.o out/sdl_wrapper.o out/tanky.o $(STUDENT_OBJS)
-	$(CC) $(CFLAGS) $(LIBS) $^ -o $@
+	$(CC) $(CFLAGS) $(LIBS) $(LIBS_NATIVE_ONLY) $^ -o $@
 
 
 # Builds the test suite executables from the corresponding test .o file
