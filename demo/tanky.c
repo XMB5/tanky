@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <util.h>
 #include <vector.h>
+#include <stdint.h>
 
 static const unsigned int RANDOM_SEED = 12346; // srand takes unsigned int
 static const vector_t SCREEN_SIZE = {1000.0, 500.0};

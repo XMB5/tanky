@@ -10,8 +10,8 @@ STUDENT_LIBS = list vector polygon body scene forces collision shape util color
 # ! -name .gitignore tells find to ignore the .gitignore
 # -type f only finds files
 # -delete deletes all the files found
-CLEAN_COMMAND = find out/ ! -name .gitignore -type f -delete && \
-find bin/ ! -name .gitignore -type f -delete
+CLEAN_COMMAND = find out/ ! -name .gitkeep -type f -delete && \
+find bin/ ! -name .gitkeep -type f -delete
 
 # Compiling with asan (run 'make all' as normal)
 ifndef NO_ASAN
@@ -72,12 +72,15 @@ WASM_STUDENT_OBJS = $(addprefix out/,$(STUDENT_LIBS:=.wasm.o))
 TEST_BINS = $(addprefix bin/test_suite_,$(STUDENT_LIBS))
 # List of demo executables, i.e. "bin/bounce.html".
 DEMO_BINS = $(addsuffix .html, $(addprefix bin/,$(DEMOS)))
+DEMO_BINS_NATIVE = $(addsuffix .native, $(addprefix bin/,$(DEMOS)))
 
 # The first Make rule. It is relatively simple
 # It builds the files in TEST_BINS and DEMO_BINS, as well as making the server for the demos
 # "To build 'all', make sure all files in TEST_BINS and DEMO_BINS are up to date."
 # You can execute this rule by running the command "make all", or just "make".
 all: $(TEST_BINS) $(DEMO_BINS) server
+
+native: $(DEMO_BINS_NATIVE)
 
 # Make the python server for your demos
 # To run this, type 'make server'
@@ -117,6 +120,9 @@ out/%.wasm.o: tests/%.c # or "tests"
 # since it is building a full executable. Also notice it uses our EMCC_FLAGS
 bin/%.html: out/emscripten.wasm.o out/%.wasm.o out/sdl_wrapper.wasm.o $(WASM_STUDENT_OBJS)
 		$(EMCC) $(EMCC_FLAGS) $(CFLAGS) $(LIBS) $^ -o $@
+bin/%.native: out/emscripten.o out/sdl_wrapper.o out/%.o $(STUDENT_OBJS)
+	$(CC) $(CFLAGS) $(LIBS) -DTANKY_NATIVE $^ -o $@
+
 
 # Builds the test suite executables from the corresponding test .o file
 # and the library .o files. The only difference from the demo build command
@@ -146,7 +152,7 @@ clean:
 
 # This special rule tells Make that "all", "clean", and "test" are rules
 # that don't build a file.
-.PHONY: all clean test
+.PHONY: all clean test native
 # Tells Make not to delete the .o files after the executable is built
 .PRECIOUS: out/%.o
 # Tells Make not to delete the wasm.o files after the executable is built
