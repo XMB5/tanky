@@ -15,7 +15,7 @@ void free_image(image_t *loaded_image) {
 void image_init() {
     int img_flags = IMG_INIT_PNG;
     if ((IMG_Init(img_flags) & img_flags) != img_flags) {
-        fprintf(stderr, "SDL IMG_Init failed: %s\n", IMG_GetError());
+        printf("SDL IMG_Init failed: %s\n", IMG_GetError());
         exit(EXIT_FAILURE);
     }
 
@@ -44,7 +44,7 @@ image_t *image_load(const char *name) {
     snprintf(path, MAX_PATH_LEN, "assets/image/%s.png", name);
     SDL_Surface *surface = IMG_Load(path);
     if (!surface) {
-        fprintf(stderr, "SDL IMG_Load failed: %s\n", IMG_GetError());
+        printf("SDL IMG_Load failed: %s\n", IMG_GetError());
         exit(EXIT_FAILURE);
     }
 
