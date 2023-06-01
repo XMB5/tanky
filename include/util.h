@@ -16,5 +16,6 @@ void *malloc_safe(size_t size);
 void *realloc_safe(void *ptr, size_t size);
 
 double rand_range(double min, double max);
+const char *strdup_safe(const char *str);
 
 #endif

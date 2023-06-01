@@ -13,7 +13,7 @@ typedef struct {
   list_t *bodies;
 } force_info_t;
 
-void force_info_free(force_info_t *force_info) {
+static void force_info_free(force_info_t *force_info) {
   if (force_info->bodies) {
     list_free(force_info->bodies);
   }
@@ -23,9 +23,15 @@ void force_info_free(force_info_t *force_info) {
   free(force_info);
 }
 
+void scene_text_to_draw_free(text_to_draw_t *text_to_draw) {
+  free((void*) text_to_draw->text);
+  free(text_to_draw);
+}
+
 struct scene {
   list_t *bodies;
   list_t *force_creators;
+  list_t *texts_to_draw;
 };
 
 scene_t *scene_init(void) {
@@ -33,12 +39,14 @@ scene_t *scene_init(void) {
   scene->bodies = list_init(INITIAL_LIST_CAPACITY, (free_func_t)body_free);
   scene->force_creators =
       list_init(INITIAL_LIST_CAPACITY, (free_func_t)force_info_free);
+  scene->texts_to_draw = list_init(INITIAL_LIST_CAPACITY, (free_func_t)scene_text_to_draw_free);
   return scene;
 }
 
 void scene_free(scene_t *scene) {
   list_free(scene->bodies);
   list_free(scene->force_creators);
+  list_free(scene->texts_to_draw);
   free(scene);
 }
 
@@ -99,6 +107,18 @@ void scene_add_bodies_force_creator(scene_t *scene, force_creator_t forcer,
   force_info->freer = freer;
   force_info->bodies = bodies;
   list_add(scene->force_creators, force_info);
+}
+
+void scene_draw_text(scene_t *scene, const char *text, vector_t top_left, rgb_color_t color) {
+  text_to_draw_t *to_draw = malloc_safe(sizeof(text_to_draw_t));
+  to_draw->text = strdup_safe(text);
+  to_draw->top_left = top_left;
+  to_draw->color = color;
+  list_add(scene->texts_to_draw, to_draw);
+}
+
+list_t *scene_get_texts_to_draw(scene_t *scene) {
+  return scene->texts_to_draw;
 }
 
 void scene_tick(scene_t *scene, double dt) {

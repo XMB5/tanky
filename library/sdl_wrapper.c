@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <util.h>
+#include <font.h>
 
 const char WINDOW_TITLE[] = "CS 3";
 const int WINDOW_WIDTH = 1000;
@@ -237,6 +238,14 @@ void sdl_render_scene(scene_t *scene) {
       list_t *shape = body_get_shape_unsafe(body);
       sdl_draw_polygon(shape, body_get_color(body));
     }
+  }
+
+  list_t *texts_to_draw = scene_get_texts_to_draw(scene);
+  size_t texts_to_draw_len = list_size(texts_to_draw);
+  for (size_t i = 0; i < texts_to_draw_len; i++) {
+    text_to_draw_t *to_draw = list_remove(texts_to_draw, 0);;
+    font_render(to_draw->text, get_window_position(to_draw->top_left, window_center), to_draw->color);
+    scene_text_to_draw_free(to_draw);
   }
   sdl_show();
 }

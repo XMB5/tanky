@@ -1,6 +1,8 @@
 #ifndef __COLOR_H__
 #define __COLOR_H__
 
+#include <SDL2/SDL.h>
+
 /**
  * A color to display on the screen.
  * The color is represented by its red, green, and blue components.
@@ -13,6 +15,7 @@ typedef struct {
 } rgb_color_t;
 
 rgb_color_t color_random();
+SDL_Color color_to_sdl(rgb_color_t color);
 
 extern const rgb_color_t COLOR_WHITE;
 

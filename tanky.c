@@ -12,6 +12,7 @@
 #include <vector.h>
 #include <stdint.h>
 #include <image.h>
+#include <font.h>
 
 static const unsigned int RANDOM_SEED = 12346; // srand takes unsigned int
 static const vector_t SCREEN_SIZE = {1000.0, 500.0};
@@ -96,6 +97,7 @@ struct state {
 state_t *emscripten_init() {
   sdl_init(VEC_ZERO, SCREEN_SIZE);
   image_init();
+  font_init();
   srand(RANDOM_SEED);
 
   state_t *state = malloc_safe(sizeof(state_t));
@@ -131,6 +133,14 @@ void emscripten_main(state_t *state) {
     body_set_angular_velocity(state->tank_1.body, 0.0);
   }
 
+  const size_t MAX_STR_SIZE = 256;
+  char display_str[MAX_STR_SIZE];
+  snprintf(display_str, MAX_STR_SIZE, "tank coords: %f,%f",
+    body_get_centroid(state->tank_1.body).x,
+    body_get_centroid(state->tank_1.body).y);
+  vector_t text_top_left = {20, 480};
+  scene_draw_text(state->scene, display_str, text_top_left, COLOR_WHITE);
+
   scene_tick(state->scene, dt);
   sdl_render_scene(state->scene);
 }
@@ -139,4 +149,5 @@ void emscripten_free(state_t *state) {
   scene_free(state->scene);
   free(state);
   image_deinit();
+  font_deinit();
 }

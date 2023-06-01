@@ -4,6 +4,12 @@
 #include "body.h"
 #include "list.h"
 
+typedef struct {
+  const char *text;
+  vector_t top_left;
+  rgb_color_t color;
+} text_to_draw_t;
+
 /**
  * A collection of bodies and force creators.
  * The scene automatically resizes to store
@@ -109,5 +115,9 @@ void scene_add_bodies_force_creator(scene_t *scene, force_creator_t forcer,
  * @param dt the time elapsed since the last tick, in seconds
  */
 void scene_tick(scene_t *scene, double dt);
+
+void scene_draw_text(scene_t *scene, const char *text, vector_t top_left, rgb_color_t color);
+list_t *scene_get_texts_to_draw(scene_t *scene);
+void scene_text_to_draw_free(text_to_draw_t *text_to_draw);
 
 #endif // #ifndef __SCENE_H__
