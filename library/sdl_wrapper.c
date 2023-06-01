@@ -1,5 +1,4 @@
 #include "sdl_wrapper.h"
-#include <SDL2/SDL.h>
 #include <SDL2/SDL2_gfxPrimitives.h>
 #include <assert.h>
 #include <limits.h>
@@ -7,6 +6,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <time.h>
+#include <util.h>
 
 const char WINDOW_TITLE[] = "CS 3";
 const int WINDOW_WIDTH = 1000;
@@ -42,7 +42,7 @@ uint32_t key_start_timestamp;
  * The value of clock() when time_since_last_tick() was last called.
  * Initially 0.
  */
-clock_t last_clock = 0;
+long last_clock = 0;
 
 static bool keys_pressed[CHAR_MAX + 1] = {false};
 
@@ -210,11 +210,31 @@ void sdl_show(void) {
 
 void sdl_render_scene(scene_t *scene) {
   sdl_clear();
+  vector_t window_center = get_window_center();
+
   size_t body_count = scene_bodies(scene);
   for (size_t i = 0; i < body_count; i++) {
     body_t *body = scene_get_body(scene, i);
-    list_t *shape = body_get_shape_unsafe(body);
-    sdl_draw_polygon(shape, body_get_color(body));
+    image_t *image = body_get_image(body);
+
+    if (image) {
+      vector_t centroid_window = get_window_position(body_get_centroid(body), window_center);
+      double scale = body_get_image_scale(body);
+      vector_t offset = body_get_image_offset(body);
+      SDL_FRect dstrect;
+      dstrect.h = scale * image->h;
+      dstrect.w = scale * image->w;
+      SDL_FPoint center;
+      center.x = dstrect.w / 2.0 + scale * offset.x;
+      center.y = dstrect.h / 2.0 + scale * -offset.y;  // negative because screen space uses opposite convention
+      dstrect.x = centroid_window.x - center.x;
+      dstrect.y = centroid_window.y - center.y;
+      double rot = body_get_angle(body) + body_get_image_rotation(body);
+      SDL_RenderCopyExF(renderer, image->texture, NULL, &dstrect, -rot / PI * 180.0, &center, 0);
+    } else {
+      list_t *shape = body_get_shape_unsafe(body);
+      sdl_draw_polygon(shape, body_get_color(body));
+    }
   }
   sdl_show();
 }
@@ -222,10 +242,17 @@ void sdl_render_scene(scene_t *scene) {
 void sdl_on_key(key_handler_t handler) { key_handler = handler; }
 
 double time_since_last_tick(void) {
-  clock_t now = clock();
+  struct timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  long now = ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
+
   double difference = last_clock
                           ? (double)(now - last_clock) / CLOCKS_PER_SEC
                           : 0.0; // return 0 the first time this is called
   last_clock = now;
   return difference;
+}
+
+SDL_Renderer *sdl_renderer() {
+  return renderer;
 }

@@ -6,6 +6,7 @@
 #include "scene.h"
 #include "vector.h"
 #include <stdbool.h>
+#include <SDL.h>
 
 // Values passed to a key handler when the given arrow key is pressed
 typedef enum {
@@ -119,5 +120,7 @@ bool sdl_get_key_pressed(char key);
  * @return the number of seconds that have elapsed
  */
 double time_since_last_tick(void);
+
+SDL_Renderer *sdl_renderer();
 
 #endif // #ifndef __SDL_WRAPPER_H__

@@ -5,6 +5,7 @@
 #include "color.h"
 #include "list.h"
 #include "vector.h"
+#include "image.h"
 
 /**
  * A rigid body constrained to the plane.
@@ -191,5 +192,25 @@ void body_remove(body_t *body);
  * @return whether body_remove() has been called on the body
  */
 bool body_is_removed(body_t *body);
+
+/**
+ * @param name file in assets/image folder, excluding ".png", for example "tank_green" 
+ * @param scale image scaling factor when rendering
+*/
+void body_set_image(body_t *body, const char *name, double scale);
+image_t *body_get_image(body_t *body);
+double body_get_image_scale(body_t *body);
+double body_get_angle(body_t *body);
+/**
+ * @param rotation angle in radians (counterclockwise)
+*/
+void body_set_image_rotation(body_t *body, double rotation);
+double body_get_image_rotation(body_t *body);
+/**
+ * @param offset instead of rendering the center of the image at `centroid`, render at `centroid + offset`
+ * Applies before scaling
+*/
+void body_set_image_offset(body_t *body, vector_t offset);
+vector_t body_get_image_offset(body_t *body);
 
 #endif // #ifndef __BODY_H__

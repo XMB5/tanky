@@ -1,10 +1,8 @@
-# List of demo programs
-DEMOS = tanky
 # List of C files in "libraries" that we provide
 STAFF_LIBS = test_util sdl_wrapper
 # List of C files in "libraries" that you will write.
 # This also defines the order in which the tests are run.
-STUDENT_LIBS = list vector polygon body scene forces collision shape util color
+STUDENT_LIBS = list vector polygon body scene forces collision shape util color image
 
 # find <dir> is the command to find files in a directory
 # ! -name .gitignore tells find to ignore the .gitignore
@@ -58,7 +56,7 @@ LIB_MATH = -lm
 # Compiler flags that link the program with the math library
 # Note that $(...) substitutes a variable's value, so this line is equivalent to
 # LIBS = -lm
-LIBS = $(LIB_MATH) $(shell sdl2-config --libs) -lSDL2_gfx
+LIBS = $(LIB_MATH) $(shell sdl2-config --libs) -lSDL2_gfx -lSDL2_image
 
 # List of compiled .o files corresponding to STUDENT_LIBS, e.g. "out/vector.o".
 # Don't worry about the syntax; it's just adding "out/" to the start
@@ -71,8 +69,8 @@ WASM_STUDENT_OBJS = $(addprefix out/,$(STUDENT_LIBS:=.wasm.o))
 # List of test suite executables, e.g. "bin/test_suite_vector"
 TEST_BINS = $(addprefix bin/test_suite_,$(STUDENT_LIBS))
 # List of demo executables, i.e. "bin/bounce.html".
-DEMO_BINS = $(addsuffix .html, $(addprefix bin/,$(DEMOS)))
-DEMO_BINS_NATIVE = $(addsuffix .native, $(addprefix bin/,$(DEMOS)))
+DEMO_BINS = bin/tanky.html
+DEMO_BINS_NATIVE = bin/tanky
 
 # The first Make rule. It is relatively simple
 # It builds the files in TEST_BINS and DEMO_BINS, as well as making the server for the demos
@@ -101,7 +99,7 @@ server:
 # to compile the source C file into the target .o file.
 out/%.o: library/%.c # source file may be found in "library"
 	$(CC) -c $(CFLAGS) $^ -o $@
-out/%.o: demo/%.c # or "demo"
+out/tanky.o: tanky.c
 	$(CC) -c $(CFLAGS) $^ -o $@
 out/%.o: tests/%.c # or "tests"
 	$(CC) -c $(CFLAGS) $^ -o $@
@@ -110,7 +108,7 @@ out/%.o: tests/%.c # or "tests"
 # This is very similar to the above compilation, except for emscripten
 out/%.wasm.o: library/%.c # source file may be found in "library"
 	$(EMCC) -c $(CFLAGS) $^ -o $@
-out/%.wasm.o: demo/%.c # or "demo"
+out/%.wasm.o: %.c # or "demo"
 	$(EMCC) -c $(CFLAGS) $^ -o $@
 out/%.wasm.o: tests/%.c # or "tests"
 	$(EMCC) -c $(CFLAGS) $^ -o $@
@@ -120,8 +118,8 @@ out/%.wasm.o: tests/%.c # or "tests"
 # since it is building a full executable. Also notice it uses our EMCC_FLAGS
 bin/%.html: out/emscripten.wasm.o out/%.wasm.o out/sdl_wrapper.wasm.o $(WASM_STUDENT_OBJS)
 		$(EMCC) $(EMCC_FLAGS) $(CFLAGS) $(LIBS) $^ -o $@
-bin/%.native: out/emscripten.o out/sdl_wrapper.o out/%.o $(STUDENT_OBJS)
-	$(CC) $(CFLAGS) $(LIBS) -DTANKY_NATIVE $^ -o $@
+bin/tanky: out/emscripten.o out/sdl_wrapper.o out/tanky.o $(STUDENT_OBJS)
+	$(CC) $(CFLAGS) $(LIBS) $^ -o $@
 
 
 # Builds the test suite executables from the corresponding test .o file

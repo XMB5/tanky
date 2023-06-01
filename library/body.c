@@ -2,11 +2,11 @@
 #include <collision.h>
 #include <list.h>
 #include <polygon.h>
-#include <sdl_wrapper.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <util.h>
 #include <vector.h>
+#include <image.h>
 
 struct body {
   list_t *shape;
@@ -21,7 +21,10 @@ struct body {
   void *info;
   free_func_t freer;
   bool removed;
-  size_t type;
+  image_t *image;
+  double image_scale;
+  double image_rotation;
+  vector_t image_offset;
 };
 
 body_t *body_init(list_t *shape, double mass, rgb_color_t color) {
@@ -43,6 +46,7 @@ body_t *body_init_with_info(list_t *shape, double mass, rgb_color_t color,
   body->info = info;
   body->freer = freer;
   body->removed = false;
+  body->image = NULL;
   return body;
 }
 
@@ -159,3 +163,36 @@ void body_add_impulse(body_t *body, vector_t impulse) {
 void body_remove(body_t *body) { body->removed = true; }
 
 bool body_is_removed(body_t *body) { return body->removed; }
+
+void body_set_image(body_t *body, const char *name, double scale) {
+  body->image = image_load(name);
+  body->image_scale = scale;
+}
+
+void body_set_image_rotation(body_t *body, double rotation) {
+  body->image_rotation = rotation;
+}
+
+image_t *body_get_image(body_t *body) {
+  return body->image;
+}
+
+double body_get_image_scale(body_t *body) {
+  return body->image_scale;
+}
+
+double body_get_angle(body_t *body) {
+  return body->angle;
+}
+
+double body_get_image_rotation(body_t *body) {
+  return body->image_rotation;
+}
+
+void body_set_image_offset(body_t *body, vector_t offset) {
+  body->image_offset = offset;
+}
+
+vector_t body_get_image_offset(body_t *body) {
+  return body->image_offset;
+}
