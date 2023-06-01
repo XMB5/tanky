@@ -1,18 +1,18 @@
 #include <body.h>
 #include <collision.h>
 #include <color.h>
+#include <font.h>
 #include <forces.h>
+#include <image.h>
 #include <scene.h>
 #include <sdl_wrapper.h>
 #include <shape.h>
 #include <state.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <util.h>
 #include <vector.h>
-#include <stdint.h>
-#include <image.h>
-#include <font.h>
 
 static const unsigned int RANDOM_SEED = 12346; // srand takes unsigned int
 static const vector_t SCREEN_SIZE = {1000.0, 500.0};
@@ -26,14 +26,15 @@ static const rgb_color_t BULLET_COLOR = {1.0, 1.0, 0.0};
 static const uint8_t BULLET_INFO =
     0; // address of BULLET_INFO specifies body is a bullet
 
-static const vector_t TANK_SIZE = {100.0, 30.0};
+static const vector_t TANK_SIZE = {40.0, 30.0};
 static const double TANK_MASS = 0.0;
-static const double TANK_DRAG = 20.0;  // very high drag, so slows down almost instantly
+static const double TANK_DRAG =
+    20.0; // very high drag, so slows down almost instantly
 static const double TANK_FORCE = 2000.0;
 static const double TANK_ANGULAR_VEL = M_PI;
-static const vector_t TANK_IMAGE_OFFSET = (vector_t) {0.0, 5.0};
+static const vector_t TANK_IMAGE_OFFSET = (vector_t){0.0, 5.0};
 
-static const vector_t TANK1_INITIAL_POSITION = {100.0, 300.0};
+static const vector_t TANK1_INITIAL_POSITION = {400.0, 300.0};
 static const uint8_t TANK1_INFO =
     0; // address of TANK1_INFO specifies body is TANK1
 
@@ -41,7 +42,7 @@ static const vector_t TANK2_INITIAL_POSITION = {800.0, 300.0};
 static const uint8_t TANK2_INFO =
     0; // address of TANK2_INFO specifies body is TANK2
 
-static const double ELASTICITY = 1.0;
+static const double ELASTICITY = 7.5;
 
 static const size_t POINTS_PER_BULLET = 1;
 
@@ -104,8 +105,8 @@ state_t *emscripten_init() {
   state_t *state = malloc_safe(sizeof(state_t));
   state->scene = scene_init();
 
-  state->tank_1.body = body_init(shape_circle_create(20), 1.0, COLOR_WHITE);
-  state->tank_2.body = body_init(shape_circle_create(20), 1.0, COLOR_WHITE);
+  state->tank_1.body = body_init(shape_rectangle(TANK_SIZE), 1.0, COLOR_WHITE);
+  state->tank_2.body = body_init(shape_rectangle(TANK_SIZE), 1.0, COLOR_WHITE);
   body_set_centroid(state->tank_1.body, TANK1_INITIAL_POSITION);
   body_set_centroid(state->tank_2.body, TANK2_INITIAL_POSITION);
   scene_add_body(state->scene, state->tank_1.body);
@@ -113,20 +114,21 @@ state_t *emscripten_init() {
   body_set_image(state->tank_1.body, "tank_red", .5);
   body_set_image(state->tank_2.body, "tank_blue", .5);
   body_set_image_rotation(state->tank_1.body, PI / 2);
-  body_set_image_rotation(state->tank_2.body, 3*PI / 2);
+  body_set_image_rotation(state->tank_2.body, 3 * PI / 2);
   body_set_image_offset(state->tank_1.body, TANK_IMAGE_OFFSET);
   body_set_image_offset(state->tank_2.body, TANK_IMAGE_OFFSET);
   create_drag(state->scene, TANK_DRAG, state->tank_1.body);
   create_drag(state->scene, TANK_DRAG, state->tank_2.body);
 
-  // collisions 
-  //create_physics_collision(state->scene, 0.0, state->map->walls, state->tank_1.body);
-  //create_physics_collision(state->scene, 0.0, state->map->walls, state->tank_2.body);
-  //create_physics_collision(state->scene, ELASTICITY, state->map->obstacles, state->tank_1.body);
-  //create_physics_collision(state->scene, ELASTICITY, state->map->obstacles, state->tank_2.body);
-  create_physics_collision(state->scene, ELASTICITY, state->tank_1.body, state->tank_2.body);
-
-
+  // collisions
+  // create_physics_collision(state->scene, 0.0, state->map->walls,
+  // state->tank_1.body); create_physics_collision(state->scene, 0.0,
+  // state->map->walls, state->tank_2.body);
+  // create_physics_collision(state->scene, ELASTICITY, state->map->obstacles,
+  // state->tank_1.body); create_physics_collision(state->scene, ELASTICITY,
+  // state->map->obstacles, state->tank_2.body);
+  create_physics_collision(state->scene, ELASTICITY, state->tank_1.body,
+                           state->tank_2.body);
 
   return state;
 }
@@ -135,10 +137,12 @@ void emscripten_main(state_t *state) {
   double dt = time_since_last_tick();
 
   if (sdl_get_key_pressed(UP_ARROW)) {
-    vector_t force = vec_rotate((vector_t) {TANK_FORCE, 0.0}, body_get_angle(state->tank_1.body));
+    vector_t force = vec_rotate((vector_t){TANK_FORCE, 0.0},
+                                body_get_angle(state->tank_1.body));
     body_add_force(state->tank_1.body, force);
   } else if (sdl_get_key_pressed(DOWN_ARROW)) {
-    vector_t force = vec_rotate((vector_t) {-TANK_FORCE, 0.0}, body_get_angle(state->tank_1.body));
+    vector_t force = vec_rotate((vector_t){-TANK_FORCE, 0.0},
+                                body_get_angle(state->tank_1.body));
     body_add_force(state->tank_1.body, force);
   }
 
@@ -151,10 +155,12 @@ void emscripten_main(state_t *state) {
   }
 
   if (sdl_get_key_pressed('w')) {
-    vector_t force = vec_rotate((vector_t) {TANK_FORCE, 0.0}, body_get_angle(state->tank_2.body));
+    vector_t force = vec_rotate((vector_t){TANK_FORCE, 0.0},
+                                body_get_angle(state->tank_2.body));
     body_add_force(state->tank_2.body, force);
   } else if (sdl_get_key_pressed('s')) {
-    vector_t force = vec_rotate((vector_t) {-TANK_FORCE, 0.0}, body_get_angle(state->tank_2.body));
+    vector_t force = vec_rotate((vector_t){-TANK_FORCE, 0.0},
+                                body_get_angle(state->tank_2.body));
     body_add_force(state->tank_2.body, force);
   }
 
@@ -169,8 +175,8 @@ void emscripten_main(state_t *state) {
   const size_t MAX_STR_SIZE = 256;
   char display_str[MAX_STR_SIZE];
   snprintf(display_str, MAX_STR_SIZE, "tank coords: %f,%f",
-    body_get_centroid(state->tank_1.body).x,
-    body_get_centroid(state->tank_1.body).y);
+           body_get_centroid(state->tank_1.body).x,
+           body_get_centroid(state->tank_1.body).y);
   vector_t text_top_left = {20, 480};
   scene_draw_text(state->scene, display_str, text_top_left, COLOR_WHITE);
 
