@@ -154,11 +154,11 @@ void emscripten_main(state_t *state) {
     body_set_angular_velocity(state->tank_1.body, 0.0);
   }
 
-  if (sdl_get_key_pressed('w')) {
+  if (sdl_get_key_pressed('s')) {
     vector_t force = vec_rotate((vector_t){TANK_FORCE, 0.0},
                                 body_get_angle(state->tank_2.body));
     body_add_force(state->tank_2.body, force);
-  } else if (sdl_get_key_pressed('s')) {
+  } else if (sdl_get_key_pressed('w')) {
     vector_t force = vec_rotate((vector_t){-TANK_FORCE, 0.0},
                                 body_get_angle(state->tank_2.body));
     body_add_force(state->tank_2.body, force);
