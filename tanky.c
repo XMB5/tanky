@@ -27,7 +27,7 @@ static const uint8_t BULLET_INFO =
     0; // address of BULLET_INFO specifies body is a bullet
 
 static const vector_t TANK_SIZE = {40.0, 30.0};
-static const double TANK_MASS = 0.0;
+static const double TANK_MASS = 1.0;
 static const double TANK_DRAG =
     20.0; // very high drag, so slows down almost instantly
 static const double TANK_FORCE = 2000.0;
@@ -105,8 +105,10 @@ state_t *emscripten_init() {
   state_t *state = malloc_safe(sizeof(state_t));
   state->scene = scene_init();
 
-  state->tank_1.body = body_init(shape_rectangle(TANK_SIZE), 1.0, COLOR_WHITE);
-  state->tank_2.body = body_init(shape_rectangle(TANK_SIZE), 1.0, COLOR_WHITE);
+  state->tank_1.body = body_init_with_info(shape_rectangle(TANK_SIZE), TANK_MASS, COLOR_WHITE,
+                                           (void*)&TANK1_INFO, NULL);
+  state->tank_2.body = body_init_with_info(shape_rectangle(TANK_SIZE), TANK_MASS, COLOR_WHITE,
+                                           (void*)&TANK2_INFO, NULL);
   body_set_centroid(state->tank_1.body, TANK1_INITIAL_POSITION);
   body_set_centroid(state->tank_2.body, TANK2_INITIAL_POSITION);
   scene_add_body(state->scene, state->tank_1.body);
@@ -133,6 +135,29 @@ state_t *emscripten_init() {
   return state;
 }
 
+static void shoot_bullet(state_t *state, tank_t *tank){
+  body_t *bullet =
+      body_init_with_info(shape_circle_create(BULLET_RADIUS), BULLET_MASS,
+                          BULLET_COLOR, (void *)&BULLET_INFO, NULL);
+  body_set_rotation(bullet, body_get_angle(tank));
+  body_set_centroid(bullet, (vector_t){body_get_centroid(tank).x, body_get_centroid(tank).y});
+  body_set_velocity(bullet, BULLET_VELOCITY);
+
+  size_t num_bodies = scene_bodies(state->scene);
+  for (size_t i = 0; i < num_bodies; i++){
+      body_t *body = scene_get_body(state->scene, i);
+      if (body_get_info(body) == &TANK1_INFO){
+        create_destructive_collision(state->scene, body, bullet);
+      }
+      else if (body_get_info(body) == &TANK2_INFO)
+      {
+        create_destructive_collision(state->scene, body, bullet);
+      }
+  }
+  scene_add_body(state->scene, bullet);
+
+}
+
 void emscripten_main(state_t *state) {
   double dt = time_since_last_tick();
 
@@ -153,6 +178,11 @@ void emscripten_main(state_t *state) {
   } else {
     body_set_angular_velocity(state->tank_1.body, 0.0);
   }
+
+  //bullet shooting 
+  // if (sdl_get_key_pressed(' ')) {
+  //     shoot_bullet(state, &state->tank_1);
+    // }
 
   if (sdl_get_key_pressed('s')) {
     vector_t force = vec_rotate((vector_t){TANK_FORCE, 0.0},
