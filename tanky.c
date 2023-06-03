@@ -21,6 +21,8 @@ static const double EXTERIOR_WALL_THICKNESS = 100.0;
 
 static const vector_t BULLET_SIZE = {20.0, 10.0};
 static const double BULLET_MASS = 1.0;
+static const double BULLET_RADIUS = 20.0;
+static const vector_t BULLET_VELOCITY = {0.0, 200.0};
 static const vector_t BULLET_INITIAL_VEL = {250.0, -400.0};
 static const rgb_color_t BULLET_COLOR = {1.0, 1.0, 0.0};
 static const uint8_t BULLET_INFO =
@@ -46,31 +48,17 @@ static const double ELASTICITY = 7.5;
 
 static const size_t POINTS_PER_BULLET = 1;
 
-// old stuff for compiling
-static const vector_t BRICK_SIZE = {89, 30};
-static const vector_t BRICK_TOP_LEFT = {55, 475};
-static const vector_t BRICK_SPACING = {99, 40};
-static const size_t BRICK_COLS = 10;
-static const size_t BRICK_ROWS = 3;
-static const uint8_t BRICK_INFO =
-    0; // address of BRICK_INFO specifies body is a brick
-
-static const double BALL_RADIUS = 10;
-static const double BALL_MASS = 10.0;
-static const double BALL_Y = 67;
-static const vector_t BALL_INITIAL_VEL = {250.0, -400.0};
-
-static const vector_t PLAYER_SIZE = {100.0, 30.0};
-static const double PLAYER_Y = 30.0;
-static const double PLAYER_SPEED = 500.0; // pixels/s
-
-static const double BULLET_Y = 80;
-static const double BULLET_RADIUS = 20.0;
-static const vector_t BULLET_VELOCITY = {0.0, 200.0};
+static const size_t HEALTH_BAR_MAX_POINTS = 10;
+static const double HEALTH_BAR_UNIT_LENGTH = 3.0;
+static const double HEALTH_BAR_HEIGHT = 10.0;
+static const double HEALTH_BAR_MASS = 1.0;
+static const vector_t HEALTH_BAR_TANK_OFFSET = {0.0, 30.0};
+static const rgb_color_t HEALTH_BAR_COLOR = {0.0, 1.0, 0.0};
 
 typedef struct tank {
   body_t *body;
-  list_t *health; // list of bodies that represent health bar
+  size_t health;
+  body_t *health_bar; // body that represents health bar
   list_t *powerups;
   bool just_shot;
   // image that correspondes to tank
@@ -122,6 +110,20 @@ state_t *emscripten_init() {
   create_drag(state->scene, TANK_DRAG, state->tank_1.body);
   create_drag(state->scene, TANK_DRAG, state->tank_2.body);
 
+  // create health bars
+  state->tank_1.health = HEALTH_BAR_MAX_POINTS;
+  vector_t health_bar_init_size = {HEALTH_BAR_MAX_POINTS*HEALTH_BAR_UNIT_LENGTH, HEALTH_BAR_HEIGHT};
+  state->tank_1.health_bar = body_init(shape_rectangle(health_bar_init_size), HEALTH_BAR_MASS, HEALTH_BAR_COLOR);
+  vector_t health_bar_1_init_pos = vec_add(TANK1_INITIAL_POSITION, HEALTH_BAR_TANK_OFFSET);
+  body_set_centroid(state->tank_1.health_bar, health_bar_1_init_pos);
+  scene_add_body(state->scene, state->tank_1.health_bar);
+
+  state->tank_2.health = HEALTH_BAR_MAX_POINTS;
+  state->tank_2.health_bar = body_init(shape_rectangle(health_bar_init_size), HEALTH_BAR_MASS, HEALTH_BAR_COLOR);
+  vector_t health_bar_2_init_pos = vec_add(TANK2_INITIAL_POSITION, HEALTH_BAR_TANK_OFFSET);
+  body_set_centroid(state->tank_2.health_bar, health_bar_2_init_pos);
+  scene_add_body(state->scene, state->tank_2.health_bar);
+
   // collisions
   // create_physics_collision(state->scene, 0.0, state->map->walls,
   // state->tank_1.body); create_physics_collision(state->scene, 0.0,
@@ -156,6 +158,10 @@ static void shoot_bullet(state_t *state, tank_t *tank){
   }
   scene_add_body(state->scene, bullet);
 
+}
+
+static void update_health_bar(state_t *state, tank_t *tank) {
+  scene_remove_body()
 }
 
 void emscripten_main(state_t *state) {
@@ -204,11 +210,16 @@ void emscripten_main(state_t *state) {
 
   const size_t MAX_STR_SIZE = 256;
   char display_str[MAX_STR_SIZE];
+  vector_t tank_1_coords = body_get_centroid(state->tank_1.body);
+  vector_t tank_2_coords = body_get_centroid(state->tank_2.body);
   snprintf(display_str, MAX_STR_SIZE, "tank coords: %f,%f",
-           body_get_centroid(state->tank_1.body).x,
-           body_get_centroid(state->tank_1.body).y);
+           tank_1_coords.x,
+           tank_1_coords.y);
   vector_t text_top_left = {20, 480};
   scene_draw_text(state->scene, display_str, text_top_left, COLOR_WHITE);
+
+  body_set_centroid(state->tank_1.health_bar, vec_add(tank_1_coords, HEALTH_BAR_TANK_OFFSET));
+  body_set_centroid(state->tank_2.health_bar, vec_add(tank_2_coords, HEALTH_BAR_TANK_OFFSET));
 
   scene_tick(state->scene, dt);
   sdl_render_scene(state->scene);
