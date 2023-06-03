@@ -52,7 +52,7 @@ static const size_t HEALTH_BAR_MAX_POINTS = 10;
 static const double HEALTH_BAR_UNIT_LENGTH = 3.0;
 static const double HEALTH_BAR_HEIGHT = 10.0;
 static const double HEALTH_BAR_MASS = 1.0;
-static const vector_t HEALTH_BAR_TANK_OFFSET = {0.0, 30.0};
+static const vector_t HEALTH_BAR_TANK_OFFSET = {0.0, 35.0};
 static const rgb_color_t HEALTH_BAR_COLOR = {0.0, 1.0, 0.0};
 
 typedef struct tank {
@@ -93,10 +93,12 @@ state_t *emscripten_init() {
   state_t *state = malloc_safe(sizeof(state_t));
   state->scene = scene_init();
 
-  state->tank_1.body = body_init_with_info(shape_rectangle(TANK_SIZE), TANK_MASS, COLOR_WHITE,
-                                           (void*)&TANK1_INFO, NULL);
-  state->tank_2.body = body_init_with_info(shape_rectangle(TANK_SIZE), TANK_MASS, COLOR_WHITE,
-                                           (void*)&TANK2_INFO, NULL);
+  state->tank_1.body =
+      body_init_with_info(shape_rectangle(TANK_SIZE), TANK_MASS, COLOR_WHITE,
+                          (void *)&TANK1_INFO, NULL);
+  state->tank_2.body =
+      body_init_with_info(shape_rectangle(TANK_SIZE), TANK_MASS, COLOR_WHITE,
+                          (void *)&TANK2_INFO, NULL);
   body_set_centroid(state->tank_1.body, TANK1_INITIAL_POSITION);
   body_set_centroid(state->tank_2.body, TANK2_INITIAL_POSITION);
   scene_add_body(state->scene, state->tank_1.body);
@@ -112,15 +114,20 @@ state_t *emscripten_init() {
 
   // create health bars
   state->tank_1.health = HEALTH_BAR_MAX_POINTS;
-  vector_t health_bar_init_size = {HEALTH_BAR_MAX_POINTS*HEALTH_BAR_UNIT_LENGTH, HEALTH_BAR_HEIGHT};
-  state->tank_1.health_bar = body_init(shape_rectangle(health_bar_init_size), HEALTH_BAR_MASS, HEALTH_BAR_COLOR);
-  vector_t health_bar_1_init_pos = vec_add(TANK1_INITIAL_POSITION, HEALTH_BAR_TANK_OFFSET);
+  vector_t health_bar_init_size = {
+      HEALTH_BAR_MAX_POINTS * HEALTH_BAR_UNIT_LENGTH, HEALTH_BAR_HEIGHT};
+  state->tank_1.health_bar = body_init(shape_rectangle(health_bar_init_size),
+                                       HEALTH_BAR_MASS, HEALTH_BAR_COLOR);
+  vector_t health_bar_1_init_pos =
+      vec_add(TANK1_INITIAL_POSITION, HEALTH_BAR_TANK_OFFSET);
   body_set_centroid(state->tank_1.health_bar, health_bar_1_init_pos);
   scene_add_body(state->scene, state->tank_1.health_bar);
 
   state->tank_2.health = HEALTH_BAR_MAX_POINTS;
-  state->tank_2.health_bar = body_init(shape_rectangle(health_bar_init_size), HEALTH_BAR_MASS, HEALTH_BAR_COLOR);
-  vector_t health_bar_2_init_pos = vec_add(TANK2_INITIAL_POSITION, HEALTH_BAR_TANK_OFFSET);
+  state->tank_2.health_bar = body_init(shape_rectangle(health_bar_init_size),
+                                       HEALTH_BAR_MASS, HEALTH_BAR_COLOR);
+  vector_t health_bar_2_init_pos =
+      vec_add(TANK2_INITIAL_POSITION, HEALTH_BAR_TANK_OFFSET);
   body_set_centroid(state->tank_2.health_bar, health_bar_2_init_pos);
   scene_add_body(state->scene, state->tank_2.health_bar);
 
@@ -137,31 +144,25 @@ state_t *emscripten_init() {
   return state;
 }
 
-static void shoot_bullet(state_t *state, tank_t *tank){
+static void shoot_bullet(state_t *state, tank_t *tank) {
   body_t *bullet =
       body_init_with_info(shape_circle_create(BULLET_RADIUS), BULLET_MASS,
                           BULLET_COLOR, (void *)&BULLET_INFO, NULL);
   body_set_rotation(bullet, body_get_angle(tank));
-  body_set_centroid(bullet, (vector_t){body_get_centroid(tank).x, body_get_centroid(tank).y});
+  body_set_centroid(
+      bullet, (vector_t){body_get_centroid(tank).x, body_get_centroid(tank).y});
   body_set_velocity(bullet, BULLET_VELOCITY);
 
   size_t num_bodies = scene_bodies(state->scene);
-  for (size_t i = 0; i < num_bodies; i++){
-      body_t *body = scene_get_body(state->scene, i);
-      if (body_get_info(body) == &TANK1_INFO){
-        create_destructive_collision(state->scene, body, bullet);
-      }
-      else if (body_get_info(body) == &TANK2_INFO)
-      {
-        create_destructive_collision(state->scene, body, bullet);
-      }
+  for (size_t i = 0; i < num_bodies; i++) {
+    body_t *body = scene_get_body(state->scene, i);
+    if (body_get_info(body) == &TANK1_INFO) {
+      create_destructive_collision(state->scene, body, bullet);
+    } else if (body_get_info(body) == &TANK2_INFO) {
+      create_destructive_collision(state->scene, body, bullet);
+    }
   }
   scene_add_body(state->scene, bullet);
-
-}
-
-static void update_health_bar(state_t *state, tank_t *tank) {
-  scene_remove_body()
 }
 
 void emscripten_main(state_t *state) {
@@ -185,10 +186,10 @@ void emscripten_main(state_t *state) {
     body_set_angular_velocity(state->tank_1.body, 0.0);
   }
 
-  //bullet shooting 
+  // bullet shooting
   // if (sdl_get_key_pressed(' ')) {
   //     shoot_bullet(state, &state->tank_1);
-    // }
+  // }
 
   if (sdl_get_key_pressed('s')) {
     vector_t force = vec_rotate((vector_t){TANK_FORCE, 0.0},
@@ -212,14 +213,15 @@ void emscripten_main(state_t *state) {
   char display_str[MAX_STR_SIZE];
   vector_t tank_1_coords = body_get_centroid(state->tank_1.body);
   vector_t tank_2_coords = body_get_centroid(state->tank_2.body);
-  snprintf(display_str, MAX_STR_SIZE, "tank coords: %f,%f",
-           tank_1_coords.x,
+  snprintf(display_str, MAX_STR_SIZE, "tank coords: %f,%f", tank_1_coords.x,
            tank_1_coords.y);
   vector_t text_top_left = {20, 480};
   scene_draw_text(state->scene, display_str, text_top_left, COLOR_WHITE);
 
-  body_set_centroid(state->tank_1.health_bar, vec_add(tank_1_coords, HEALTH_BAR_TANK_OFFSET));
-  body_set_centroid(state->tank_2.health_bar, vec_add(tank_2_coords, HEALTH_BAR_TANK_OFFSET));
+  body_set_centroid(state->tank_1.health_bar,
+                    vec_add(tank_1_coords, HEALTH_BAR_TANK_OFFSET));
+  body_set_centroid(state->tank_2.health_bar,
+                    vec_add(tank_2_coords, HEALTH_BAR_TANK_OFFSET));
 
   scene_tick(state->scene, dt);
   sdl_render_scene(state->scene);
