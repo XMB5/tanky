@@ -26,6 +26,11 @@ typedef struct {
   free_func_t handler_aux_freer;
 } collision_aux_t;
 
+typedef struct {
+  size_t *health;
+  bool *was_shot;
+} bullet_aux_t;
+
 static void collision_aux_free(collision_aux_t *aux) {
   if (aux->handler_aux_freer && aux->handler_aux) {
     aux->handler_aux_freer(aux->handler_aux);
@@ -186,6 +191,19 @@ void create_destructive_collision(scene_t *scene, body_t *body1,
                                   body_t *body2) {
   create_collision(scene, body1, body2, destructive_collision_handler, NULL,
                    NULL);
+}
+
+static void bullet_collision_handler(body_t *tank, body_t *bullet, vector_t axis, bullet_aux_t *aux) {
+  *aux->health = *aux->health - 1;
+  *aux->was_shot = true;
+  body_remove(bullet);
+}
+
+void create_bullet_collision(scene_t *scene, body_t *tank, body_t *bullet, size_t *health, bool *was_shot) {
+  bullet_aux_t *aux = malloc(sizeof(bullet_aux_t));
+  aux->health = health;
+  aux->was_shot = was_shot;
+  create_collision(scene, tank, bullet, (collision_handler_t)bullet_collision_handler, aux, free);
 }
 
 void physics_collision_handler(body_t *body1, body_t *body2, vector_t axis,
