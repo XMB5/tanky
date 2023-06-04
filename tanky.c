@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <util.h>
 #include <vector.h>
+#include <math.h>
 
 static const unsigned int RANDOM_SEED = 12346; // srand takes unsigned int
 static const vector_t SCREEN_SIZE = {1000.0, 500.0};
@@ -49,11 +50,13 @@ static const double ELASTICITY = 7.5;
 static const size_t POINTS_PER_BULLET = 1;
 
 static const size_t HEALTH_BAR_MAX_POINTS = 10;
-static const double HEALTH_BAR_UNIT_LENGTH = 3.0;
-static const double HEALTH_BAR_HEIGHT = 10.0;
+static const double HEALTH_BAR_UNIT_LENGTH = 5.0;
+static const double HEALTH_BAR_HEIGHT = 1.0;
 static const double HEALTH_BAR_MASS = 1.0;
-static const vector_t HEALTH_BAR_TANK_OFFSET = {0.0, 35.0};
+static const vector_t HEALTH_BAR_TANK_OFFSET = {0.0, 40.0};
 static const rgb_color_t HEALTH_BAR_COLOR = {0.0, 1.0, 0.0};
+static const uint8_t HEALTH_BAR_1_INFO = 0;
+static const uint8_t HEALTH_BAR_2_INFO = 0;
 
 typedef struct tank {
   body_t *body;
@@ -116,16 +119,16 @@ state_t *emscripten_init() {
   state->tank_1.health = HEALTH_BAR_MAX_POINTS;
   vector_t health_bar_init_size = {
       HEALTH_BAR_MAX_POINTS * HEALTH_BAR_UNIT_LENGTH, HEALTH_BAR_HEIGHT};
-  state->tank_1.health_bar = body_init(shape_rectangle(health_bar_init_size),
-                                       HEALTH_BAR_MASS, HEALTH_BAR_COLOR);
+  state->tank_1.health_bar = body_init_with_info(shape_rectangle(health_bar_init_size),
+                                       HEALTH_BAR_MASS, HEALTH_BAR_COLOR, (void *)&HEALTH_BAR_1_INFO, NULL);
   vector_t health_bar_1_init_pos =
       vec_add(TANK1_INITIAL_POSITION, HEALTH_BAR_TANK_OFFSET);
   body_set_centroid(state->tank_1.health_bar, health_bar_1_init_pos);
   scene_add_body(state->scene, state->tank_1.health_bar);
 
   state->tank_2.health = HEALTH_BAR_MAX_POINTS;
-  state->tank_2.health_bar = body_init(shape_rectangle(health_bar_init_size),
-                                       HEALTH_BAR_MASS, HEALTH_BAR_COLOR);
+  state->tank_2.health_bar = body_init_with_info(shape_rectangle(health_bar_init_size),
+                                       HEALTH_BAR_MASS, HEALTH_BAR_COLOR, (void *)&HEALTH_BAR_2_INFO, NULL);
   vector_t health_bar_2_init_pos =
       vec_add(TANK2_INITIAL_POSITION, HEALTH_BAR_TANK_OFFSET);
   body_set_centroid(state->tank_2.health_bar, health_bar_2_init_pos);
@@ -165,6 +168,22 @@ static void shoot_bullet(state_t *state, tank_t *tank) {
   scene_add_body(state->scene, bullet);
 }
 
+static void update_health_bar(state_t *state, tank_t tank) {
+  vector_t health_bar_size = {tank.health*HEALTH_BAR_UNIT_LENGTH, HEALTH_BAR_HEIGHT};
+  if (body_get_info(tank.body) == &TANK1_INFO) {
+    body_remove(state->tank_1.health_bar);
+    state->tank_1.health_bar = body_init_with_info(shape_rectangle(health_bar_size),
+                                       HEALTH_BAR_MASS, HEALTH_BAR_COLOR, (void *)&HEALTH_BAR_1_INFO, NULL);
+    scene_add_body(state->scene, state->tank_1.health_bar);
+  }
+  else if (body_get_info(tank.body) == &TANK2_INFO) {
+    body_remove(state->tank_2.health_bar);
+    state->tank_2.health_bar = body_init_with_info(shape_rectangle(health_bar_size),
+                                       HEALTH_BAR_MASS, HEALTH_BAR_COLOR, (void *)&HEALTH_BAR_2_INFO, NULL);
+    scene_add_body(state->scene, state->tank_1.health_bar);
+  }
+}
+
 void emscripten_main(state_t *state) {
   double dt = time_since_last_tick();
 
@@ -180,6 +199,8 @@ void emscripten_main(state_t *state) {
 
   if (sdl_get_key_pressed(RIGHT_ARROW)) {
     body_set_angular_velocity(state->tank_1.body, -TANK_ANGULAR_VEL);
+    state->tank_1.health = fmod(body_get_centroid(state->tank_1.body).x, 50.0);
+    update_health_bar(state, state->tank_1);
   } else if (sdl_get_key_pressed(LEFT_ARROW)) {
     body_set_angular_velocity(state->tank_1.body, TANK_ANGULAR_VEL);
   } else {
@@ -187,9 +208,9 @@ void emscripten_main(state_t *state) {
   }
 
   // bullet shooting
-  // if (sdl_get_key_pressed(' ')) {
-  //     shoot_bullet(state, &state->tank_1);
-  // }
+  if (sdl_get_key_pressed(' ')) {
+      shoot_bullet(state, &state->tank_1);
+  }
 
   if (sdl_get_key_pressed('s')) {
     vector_t force = vec_rotate((vector_t){TANK_FORCE, 0.0},
