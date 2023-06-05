@@ -222,47 +222,47 @@ void emscripten_main(state_t *state) {
   double dt = time_since_last_tick();
 
   if (sdl_get_key_pressed(UP_ARROW)) {
-    vector_t force = vec_rotate((vector_t){TANK_FORCE, 0.0},
-                                body_get_angle(state->tank_1.body));
-    body_add_force(state->tank_1.body, force);
-  } else if (sdl_get_key_pressed(DOWN_ARROW)) {
     vector_t force = vec_rotate((vector_t){-TANK_FORCE, 0.0},
-                                body_get_angle(state->tank_1.body));
-    body_add_force(state->tank_1.body, force);
+                                body_get_angle(state->tank_2.body));
+    body_add_force(state->tank_2.body, force);
+  } else if (sdl_get_key_pressed(DOWN_ARROW)) {
+    vector_t force = vec_rotate((vector_t){TANK_FORCE, 0.0},
+                                body_get_angle(state->tank_2.body));
+    body_add_force(state->tank_2.body, force);
   }
 
   if (sdl_get_key_pressed(RIGHT_ARROW)) {
-    body_set_angular_velocity(state->tank_1.body, -TANK_ANGULAR_VEL);
+    body_set_angular_velocity(state->tank_2.body, -TANK_ANGULAR_VEL);
   } else if (sdl_get_key_pressed(LEFT_ARROW)) {
-    body_set_angular_velocity(state->tank_1.body, TANK_ANGULAR_VEL);
+    body_set_angular_velocity(state->tank_2.body, TANK_ANGULAR_VEL);
   } else {
-    body_set_angular_velocity(state->tank_1.body, 0.0);
+    body_set_angular_velocity(state->tank_2.body, 0.0);
   }
 
   // bullet shooting
   if (sdl_get_key_pressed('/')) {
-    shoot_bullet(state, &state->tank_1);
+    shoot_bullet(state, &state->tank_2);
   }
   if (sdl_get_key_pressed('e')) {
-    shoot_bullet(state, &state->tank_2);
+    shoot_bullet(state, &state->tank_1);
   }
 
   if (sdl_get_key_pressed('s')) {
-    vector_t force = vec_rotate((vector_t){TANK_FORCE, 0.0},
-                                body_get_angle(state->tank_2.body));
-    body_add_force(state->tank_2.body, force);
-  } else if (sdl_get_key_pressed('w')) {
     vector_t force = vec_rotate((vector_t){-TANK_FORCE, 0.0},
-                                body_get_angle(state->tank_2.body));
-    body_add_force(state->tank_2.body, force);
+                                body_get_angle(state->tank_1.body));
+    body_add_force(state->tank_1.body, force);
+  } else if (sdl_get_key_pressed('w')) {
+    vector_t force = vec_rotate((vector_t){TANK_FORCE, 0.0},
+                                body_get_angle(state->tank_1.body));
+    body_add_force(state->tank_1.body, force);
   }
 
   if (sdl_get_key_pressed('d')) {
-    body_set_angular_velocity(state->tank_2.body, -TANK_ANGULAR_VEL);
+    body_set_angular_velocity(state->tank_1.body, -TANK_ANGULAR_VEL);
   } else if (sdl_get_key_pressed('a')) {
-    body_set_angular_velocity(state->tank_2.body, TANK_ANGULAR_VEL);
+    body_set_angular_velocity(state->tank_1.body, TANK_ANGULAR_VEL);
   } else {
-    body_set_angular_velocity(state->tank_2.body, 0.0);
+    body_set_angular_velocity(state->tank_1.body, 0.0);
   }
 
   const size_t MAX_STR_SIZE = 256;
