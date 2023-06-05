@@ -116,7 +116,7 @@ state_t *emscripten_init() {
   create_drag(state->scene, TANK_DRAG, state->tank_2.body);
 
   // create health bars
-  size_t *health1 = malloc(sizeof(size_t));  // needs to be freed at some point
+  size_t *health1 = malloc(sizeof(size_t)); // needs to be freed at some point
   *health1 = HEALTH_BAR_MAX_POINTS;
   state->tank_1.health = health1;
   vector_t health_bar_init_size = {
@@ -145,7 +145,6 @@ state_t *emscripten_init() {
 
   state->tank_2.was_shot = malloc(sizeof(bool));
   *state->tank_2.was_shot = false;
-
 
   // collisions
   // create_physics_collision(state->scene, 0.0, state->map->walls,
@@ -183,17 +182,18 @@ static void shoot_bullet(state_t *state, tank_t *tank) {
       body_init_with_info(shape_circle_create(BULLET_RADIUS), BULLET_MASS,
                           BULLET_COLOR, (void *)&BULLET_INFO, NULL);
   body_set_rotation(bullet, body_get_angle(tank->body));
-  body_set_centroid(
-      bullet, (vector_t){body_get_centroid(tank->body).x, body_get_centroid(tank->body).y});
+  body_set_centroid(bullet, (vector_t){body_get_centroid(tank->body).x,
+                                       body_get_centroid(tank->body).y});
   body_set_velocity(bullet, BULLET_VELOCITY);
 
   if (body_get_info(tank->body) == &TANK1_INFO) {
     // create_destructive_collision(state->scene, state->tank_2.body, bullet);
-    create_bullet_collision(state->scene, state->tank_2.body, bullet, state->tank_2.health, state->tank_2.was_shot);
-  }
-  else if (body_get_info(tank->body) == &TANK2_INFO) {
+    create_bullet_collision(state->scene, state->tank_2.body, bullet,
+                            state->tank_2.health, state->tank_2.was_shot);
+  } else if (body_get_info(tank->body) == &TANK2_INFO) {
     // create_destructive_collision(state->scene, state->tank_1.body, bullet);
-    create_bullet_collision(state->scene, state->tank_1.body, bullet, state->tank_1.health, state->tank_1.was_shot);
+    create_bullet_collision(state->scene, state->tank_1.body, bullet,
+                            state->tank_1.health, state->tank_1.was_shot);
   }
 
   // size_t num_bodies = scene_bodies(state->scene);
@@ -212,8 +212,7 @@ static void tank_dead(state_t *state, tank_t tank) {
   *tank.health = HEALTH_BAR_MAX_POINTS;
   if (body_get_info(tank.body) == &TANK1_INFO) {
     state->tank_2.points = state->tank_2.points + 1;
-  }
-  else if (body_get_info(tank.body) == &TANK2_INFO) {
+  } else if (body_get_info(tank.body) == &TANK2_INFO) {
     state->tank_1.points = state->tank_1.points + 1;
   }
 }
@@ -269,8 +268,11 @@ void emscripten_main(state_t *state) {
   char display_str[MAX_STR_SIZE];
   vector_t tank_1_coords = body_get_centroid(state->tank_1.body);
   vector_t tank_2_coords = body_get_centroid(state->tank_2.body);
-  snprintf(display_str, MAX_STR_SIZE, "tank coords: %f,%f\t blue tank points: %zu\t red tank points: %zu\t blue tank shot: %d", tank_1_coords.x,
-           tank_1_coords.y, state->tank_2.points, state->tank_1.points, *state->tank_2.was_shot);
+  snprintf(display_str, MAX_STR_SIZE,
+           "tank coords: %f,%f\t blue tank points: %zu\t red tank points: "
+           "%zu\t blue tank shot: %d",
+           tank_1_coords.x, tank_1_coords.y, state->tank_2.points,
+           state->tank_1.points, *state->tank_2.was_shot);
   vector_t text_top_left = {20, 480};
   scene_draw_text(state->scene, display_str, text_top_left, COLOR_WHITE);
 
@@ -288,10 +290,12 @@ void emscripten_main(state_t *state) {
     *state->tank_2.was_shot = false;
   }
 
-  if (*state->tank_1.health == 0 || *state->tank_1.health > HEALTH_BAR_MAX_POINTS) {
+  if (*state->tank_1.health == 0 ||
+      *state->tank_1.health > HEALTH_BAR_MAX_POINTS) {
     tank_dead(state, state->tank_1);
   }
-  if (*state->tank_2.health == 0 || *state->tank_2.health > HEALTH_BAR_MAX_POINTS) {
+  if (*state->tank_2.health == 0 ||
+      *state->tank_2.health > HEALTH_BAR_MAX_POINTS) {
     tank_dead(state, state->tank_2);
   }
 
