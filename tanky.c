@@ -149,45 +149,40 @@ state_t *emscripten_init() {
   list_add(walls, right_wall);
 
   vector_t wall_positions[NUM_INTERIOR_WALLS] = {
-      {.x = 150, .y = 100},
-      {.x = 850, .y = 100},
-      {.x = 150, .y = 400},
-      {.x = 850, .y = 400},
-      {.x = 350, .y = 250},
-      {.x = 650, .y = 250},
-      {.x = 500, .y = 100},
-      {.x = 500, .y = 400},
-      {.x = 750, .y = 250}
-  };
+      {.x = 150, .y = 100}, {.x = 850, .y = 100}, {.x = 150, .y = 400},
+      {.x = 850, .y = 400}, {.x = 350, .y = 250}, {.x = 650, .y = 250},
+      {.x = 500, .y = 100}, {.x = 500, .y = 400}, {.x = 750, .y = 250}};
 
-  int rotations[] = {0, 1, 0, 1, 0, 1, 0, 1, 1}; // 0 for vertical, 1 for horizontal
+  int rotations[] = {0, 1, 0, 1, 0,
+                     1, 0, 1, 1}; // 0 for vertical, 1 for horizontal
 
   // Generate walls
   for (size_t i = 0; i < NUM_INTERIOR_WALLS; i++) {
-      body_t *interior_wall = body_init_with_info(shape_rectangle(INTERIOR_WALL_SIZE),
-          INFINITY, WALL_COLOR, (void *)&WALL_INFO, NULL);
+    body_t *interior_wall =
+        body_init_with_info(shape_rectangle(INTERIOR_WALL_SIZE), INFINITY,
+                            WALL_COLOR, (void *)&WALL_INFO, NULL);
 
-      body_set_centroid(interior_wall, wall_positions[i]);
+    body_set_centroid(interior_wall, wall_positions[i]);
 
-      body_set_rotation(interior_wall, (double) rotations[i] * PI / 2);
+    body_set_rotation(interior_wall, (double)rotations[i] * PI / 2);
 
-      list_add(walls, interior_wall);
+    list_add(walls, interior_wall);
   }
 
   // // Generate interior walls
   // for (size_t i = 0; i < NUM_INTERIOR_WALLS; i++) {
-  //   body_t *interior_wall = body_init_with_info(shape_rectangle(INTERIOR_WALL_SIZE),
+  //   body_t *interior_wall =
+  //   body_init_with_info(shape_rectangle(INTERIOR_WALL_SIZE),
   //       INFINITY, WALL_COLOR, (void *)&WALL_INFO, NULL);
-    
+
   //   vector_t wall_position = {
   //       .x = (i + 1) * SCREEN_SIZE.x / (NUM_INTERIOR_WALLS + 1),
   //       .y = SCREEN_SIZE.y / 2
   //   };
-    
+
   //   body_set_centroid(interior_wall, wall_position);
   //   list_add(walls, interior_wall);
   // }
-
 
   state->map.walls = walls;
 
@@ -296,12 +291,14 @@ static void shoot_bullet(state_t *state, tank_t *tank) {
     state->shoot_cooldown_pl1 = SHOOT_INTERVAL;
     create_bullet_collision(state->scene, state->tank_2.body, bullet,
                             state->tank_2.health, state->tank_2.was_shot);
-    create_newtonian_gravity(state->scene, BULLET_GRAVITY, state->tank_2.body, bullet);
+    create_newtonian_gravity(state->scene, BULLET_GRAVITY, state->tank_2.body,
+                             bullet);
   } else if (body_get_info(tank->body) == &TANK2_INFO) {
     state->shoot_cooldown_pl2 = SHOOT_INTERVAL;
     create_bullet_collision(state->scene, state->tank_1.body, bullet,
                             state->tank_1.health, state->tank_1.was_shot);
-    create_newtonian_gravity(state->scene, BULLET_GRAVITY, state->tank_1.body, bullet);
+    create_newtonian_gravity(state->scene, BULLET_GRAVITY, state->tank_1.body,
+                             bullet);
   }
 
   // wall collisions
@@ -312,9 +309,9 @@ static void shoot_bullet(state_t *state, tank_t *tank) {
       create_physics_collision(state->scene, BULLET_ELASTICITY, body, bullet);
     }
   }
-    scene_add_body(state->scene, bullet);
+  scene_add_body(state->scene, bullet);
 
-  // Overlaying the bullet with an image 
+  // Overlaying the bullet with an image
   // body_set_image(scene->bullet, "bulletDark1_outline", .1);
   // body_set_image_rotation(scene->bullet, angle);
   // body_set_image_offset(scene->bullet, BULLET_IMAGE_OFFSET);
@@ -324,8 +321,13 @@ static void tank_dead(state_t *state, tank_t tank) {
   *tank.health = HEALTH_BAR_MAX_POINTS;
   if (body_get_info(tank.body) == &TANK1_INFO) {
     state->tank_2.points = state->tank_2.points + 1;
-  } else if (body_get_info(tank.body) == &TANK2_INFO) {
+    body_set_centroid(state->tank_1.body, TANK1_INITIAL_POSITION);
+    // TODO: CLEAR BULLETS
+  }
+  else if (body_get_info(tank.body) == &TANK2_INFO) {
     state->tank_1.points = state->tank_1.points + 1;
+    body_set_centroid(state->tank_2.body, TANK2_INITIAL_POSITION);
+    // TODO: CLEAR BULLETS
   }
 }
 
@@ -355,7 +357,7 @@ void emscripten_main(state_t *state) {
     state->shoot_cooldown_pl2 -= dt;
   }
   if (sdl_get_key_pressed('/')) {
-    if(state->shoot_cooldown_pl2 <= 0){
+    if (state->shoot_cooldown_pl2 <= 0) {
       shoot_bullet(state, &state->tank_2);
     }
   }
@@ -363,7 +365,7 @@ void emscripten_main(state_t *state) {
     state->shoot_cooldown_pl1 -= dt;
   }
   if (sdl_get_key_pressed('e')) {
-    if(state->shoot_cooldown_pl1 <= 0){
+    if (state->shoot_cooldown_pl1 <= 0) {
       shoot_bullet(state, &state->tank_1);
     }
   }
