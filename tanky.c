@@ -28,9 +28,10 @@ static const uint8_t WALL_INFO =
 
 static const vector_t BULLET_SIZE = {10.0, 5.0};
 static const double BULLET_MASS = 1.0;
+static const double BULLET_ELASTICITY = 1.0;
 static const double BULLET_RADIUS = 5.0;
 static const double BULLET_OFFSET_RATIO = 1.25;
-static const double  BULLET_SPEED = -200.0;
+static const double  BULLET_SPEED = -300.0;
 static const vector_t BULLET_INITIAL_VEL = {250.0, -400.0};
 static const rgb_color_t BULLET_COLOR = {1.0, 1.0, 1.0};
 static const uint8_t BULLET_INFO =
@@ -264,6 +265,15 @@ static void shoot_bullet(state_t *state, tank_t *tank) {
   } else if (body_get_info(tank->body) == &TANK2_INFO) {
     create_bullet_collision(state->scene, state->tank_1.body, bullet,
                             state->tank_1.health, state->tank_1.was_shot);
+  }
+
+  // wall collisions 
+  size_t num_bodies = scene_bodies(state->scene);
+  for (size_t i = 0; i < num_bodies; i++) {
+    body_t *body = scene_get_body(state->scene, i);
+    if (body_get_info(body) == &WALL_INFO) {
+      create_physics_collision(state->scene, BULLET_ELASTICITY, body, bullet);
+    }
   }
 
   scene_add_body(state->scene, bullet);
