@@ -137,7 +137,8 @@ state_t *emscripten_init() {
   // const size_t num_walls = 3;
   // for (size_t i = 0; i < num_walls; i++) {
   //   scene_add_body(state->scene, walls[i]);
-  //   create_physics_collision(state->scene, ELASTICITY, state->ball, walls[i]);
+  //   create_physics_collision(state->scene, ELASTICITY, state->ball,
+  //   walls[i]);
   // }
 
   // scene_add_body(state->scene, top_wall)
@@ -173,9 +174,10 @@ state_t *emscripten_init() {
   create_drag(state->scene, TANK_DRAG, state->tank_2.body);
 
   // Set collisions
-  create_physics_collision(state->scene, ELASTICITY, state->tank_1.body, top_wall);
-  create_physics_collision(state->scene, ELASTICITY, state->tank_1.body, bottom_wall);
-
+  create_physics_collision(state->scene, ELASTICITY, state->tank_1.body,
+                           top_wall);
+  create_physics_collision(state->scene, ELASTICITY, state->tank_1.body,
+                           bottom_wall);
 
   // create health bars
   size_t *health1 = malloc(sizeof(size_t)); // needs to be freed at some point
