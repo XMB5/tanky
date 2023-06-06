@@ -27,28 +27,30 @@ static const uint8_t WALL_INFO =
     0; // address of WALL_INFO specifies body is a wall
 
 static const vector_t BULLET_SIZE = {10.0, 5.0};
-static const double BULLET_MASS = 1.0;
+static const double BULLET_MASS = .1;
+static const double BULLET_ELASTICITY = 1.0;
 static const double BULLET_RADIUS = 5.0;
 static const double BULLET_OFFSET_RATIO = 1.25;
-static const double  BULLET_SPEED = -200.0;
+static const double BULLET_SPEED = -300.0;
+static const double BULLET_GRAVITY = 100000.0;
 static const vector_t BULLET_INITIAL_VEL = {250.0, -400.0};
-static const rgb_color_t BULLET_COLOR = {1.0, 1.0, 1.0};
+static const vector_t BULLET_IMAGE_OFFSET = (vector_t){0.0, 5.0};
 static const uint8_t BULLET_INFO =
     0; // address of BULLET_INFO specifies body is a bullet
 
 static const vector_t TANK_SIZE = {40.0, 30.0};
-static const double TANK_MASS = 1.0;
+static const double TANK_MASS = 10.0;
 static const double TANK_DRAG =
-    20.0; // very high drag, so slows down almost instantly
-static const double TANK_FORCE = 2000.0;
+    200.0; // very high drag, so slows down almost instantly
+static const double TANK_FORCE = 20000.0;
 static const double TANK_ANGULAR_VEL = M_PI;
 static const vector_t TANK_IMAGE_OFFSET = (vector_t){0.0, 5.0};
 
-static const vector_t TANK1_INITIAL_POSITION = {100.0, 300.0};
+static const vector_t TANK1_INITIAL_POSITION = {80.0, 250.0};
 static const uint8_t TANK1_INFO =
     0; // address of TANK1_INFO specifies body is TANK1
 
-static const vector_t TANK2_INITIAL_POSITION = {900.0, 300.0};
+static const vector_t TANK2_INITIAL_POSITION = {920.0, 250.0};
 static const uint8_t TANK2_INFO =
     0; // address of TANK2_INFO specifies body is TANK2
 
@@ -64,6 +66,8 @@ static const vector_t HEALTH_BAR_TANK_OFFSET = {0.0, 40.0};
 static const rgb_color_t HEALTH_BAR_COLOR = {0.0, 1.0, 0.0};
 static const uint8_t HEALTH_BAR_1_INFO = 0;
 static const uint8_t HEALTH_BAR_2_INFO = 0;
+
+static const double SHOOT_INTERVAL = 1.5; // sec
 
 typedef struct tank {
   body_t *body;
@@ -92,6 +96,8 @@ struct state {
   tank_t tank_1;
   tank_t tank_2;
   list_t *bullets; // list of bullet_t bullets
+  double shoot_cooldown_pl1;
+  double shoot_cooldown_pl2;
 };
 
 state_t *emscripten_init() {
@@ -272,27 +278,46 @@ static void update_health_bar(state_t *state, tank_t tank) {
 static void shoot_bullet(state_t *state, tank_t *tank) {
   body_t *bullet =
       body_init_with_info(shape_circle_create(BULLET_RADIUS), BULLET_MASS,
-                          BULLET_COLOR, (void *)&BULLET_INFO, NULL);
+                          COLOR_WHITE, (void *)&BULLET_INFO, NULL);
   double angle = body_get_angle(tank->body);
-  double bullet_offset = TANK_SIZE.y*BULLET_OFFSET_RATIO/2;
+  double bullet_offset = TANK_SIZE.y * BULLET_OFFSET_RATIO / 2;
   if (body_get_info(tank->body) == &TANK1_INFO) {
     angle += PI;
   }
-  double bullet_x = body_get_centroid(tank->body).x - (cos(angle)*bullet_offset);
-  double bullet_y = body_get_centroid(tank->body).y - (sin(angle)*bullet_offset);
+  double bullet_x =
+      body_get_centroid(tank->body).x - (cos(angle) * bullet_offset);
+  double bullet_y =
+      body_get_centroid(tank->body).y - (sin(angle) * bullet_offset);
   body_set_centroid(bullet, (vector_t){bullet_x, bullet_y});
-  body_set_velocity(bullet, (vector_t){BULLET_SPEED * cos(angle), BULLET_SPEED * sin(angle)});
-  
+  body_set_velocity(
+      bullet, (vector_t){BULLET_SPEED * cos(angle), BULLET_SPEED * sin(angle)});
 
   if (body_get_info(tank->body) == &TANK1_INFO) {
+    state->shoot_cooldown_pl1 = SHOOT_INTERVAL;
     create_bullet_collision(state->scene, state->tank_2.body, bullet,
                             state->tank_2.health, state->tank_2.was_shot);
+    create_newtonian_gravity(state->scene, BULLET_GRAVITY, state->tank_2.body, bullet);
   } else if (body_get_info(tank->body) == &TANK2_INFO) {
+    state->shoot_cooldown_pl2 = SHOOT_INTERVAL;
     create_bullet_collision(state->scene, state->tank_1.body, bullet,
                             state->tank_1.health, state->tank_1.was_shot);
+    create_newtonian_gravity(state->scene, BULLET_GRAVITY, state->tank_1.body, bullet);
   }
 
-  scene_add_body(state->scene, bullet);
+  // wall collisions
+  size_t num_bodies = scene_bodies(state->scene);
+  for (size_t i = 0; i < num_bodies; i++) {
+    body_t *body = scene_get_body(state->scene, i);
+    if (body_get_info(body) == &WALL_INFO) {
+      create_physics_collision(state->scene, BULLET_ELASTICITY, body, bullet);
+    }
+  }
+    scene_add_body(state->scene, bullet);
+
+  // Overlaying the bullet with an image 
+  // body_set_image(scene->bullet, "bulletDark1_outline", .1);
+  // body_set_image_rotation(scene->bullet, angle);
+  // body_set_image_offset(scene->bullet, BULLET_IMAGE_OFFSET);
 }
 
 static void tank_dead(state_t *state, tank_t tank) {
@@ -326,11 +351,21 @@ void emscripten_main(state_t *state) {
   }
 
   // bullet shooting
+  if (state->shoot_cooldown_pl2 > 0.0) {
+    state->shoot_cooldown_pl2 -= dt;
+  }
   if (sdl_get_key_pressed('/')) {
-    shoot_bullet(state, &state->tank_2);
+    if(state->shoot_cooldown_pl2 <= 0){
+      shoot_bullet(state, &state->tank_2);
+    }
+  }
+  if (state->shoot_cooldown_pl1 > 0.0) {
+    state->shoot_cooldown_pl1 -= dt;
   }
   if (sdl_get_key_pressed('e')) {
-    shoot_bullet(state, &state->tank_1);
+    if(state->shoot_cooldown_pl1 <= 0){
+      shoot_bullet(state, &state->tank_1);
+    }
   }
 
   if (sdl_get_key_pressed('s')) {
