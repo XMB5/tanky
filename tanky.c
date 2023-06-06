@@ -19,6 +19,8 @@ static const unsigned int RANDOM_SEED = 12346; // srand takes unsigned int
 static const vector_t SCREEN_SIZE = {1000.0, 500.0};
 
 static const double EXTERIOR_WALL_THICKNESS = 100.0;
+static const vector_t WALL_COLOR = {0.0, 0.0, 0.0};
+
 
 static const vector_t BULLET_SIZE = {20.0, 10.0};
 static const double BULLET_MASS = 1.0;
@@ -96,6 +98,37 @@ state_t *emscripten_init() {
   state_t *state = malloc_safe(sizeof(state_t));
   state->scene = scene_init();
 
+  // TODO: create walls
+  // Top wall
+  vector_t top_wall_centroid = {.x = SCREEN_SIZE.x / 2, .y = SCREEN_SIZE.y + EXTERIOR_WALL_THICKNESS / 2};
+  body_t *top_wall = body_init(shape_rectangle((vector_t){SCREEN_SIZE.x, EXTERIOR_WALL_THICKNESS}), INFINITY, WALL_COLOR);
+  body_set_centroid(top_wall, top_wall_centroid);
+  scene_add_body(state->scene, top_wall);
+
+  // Bottom wall
+  vector_t bottom_wall_centroid = {.x = SCREEN_SIZE.x / 2, .y = -EXTERIOR_WALL_THICKNESS / 2};
+  body_t *bottom_wall = body_init(shape_rectangle((vector_t){SCREEN_SIZE.x, EXTERIOR_WALL_THICKNESS}), INFINITY, WALL_COLOR);
+  body_set_centroid(bottom_wall, bottom_wall_centroid);
+  scene_add_body(state->scene, bottom_wall);
+
+  // Left wall
+  vector_t left_wall_centroid = {.x = -EXTERIOR_WALL_THICKNESS / 2, .y = SCREEN_SIZE.y / 2};
+  body_t *left_wall = body_init(shape_rectangle((vector_t){EXTERIOR_WALL_THICKNESS, SCREEN_SIZE.y}), INFINITY, WALL_COLOR);
+  body_set_centroid(left_wall, left_wall_centroid);
+  scene_add_body(state->scene, left_wall);
+
+  // Right wall
+  vector_t right_wall_centroid = {.x = SCREEN_SIZE.x + EXTERIOR_WALL_THICKNESS / 2, .y = SCREEN_SIZE.y / 2};
+  body_t *right_wall = body_init(shape_rectangle((vector_t){EXTERIOR_WALL_THICKNESS, SCREEN_SIZE.y}), INFINITY, WALL_COLOR);
+  body_set_centroid(right_wall, right_wall_centroid);
+  scene_add_body(state->scene, right_wall);
+
+  list_add(state->map.walls, top_wall);
+  list_add(state->map.walls, bottom_wall);
+  list_add(state->map.walls, left_wall);
+  list_add(state->map.walls, right_wall);
+
+  // create tanks
   state->tank_1.body =
       body_init_with_info(shape_rectangle(TANK_SIZE), TANK_MASS, COLOR_WHITE,
                           (void *)&TANK1_INFO, NULL);
