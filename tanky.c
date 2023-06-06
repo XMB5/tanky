@@ -21,10 +21,10 @@ static const vector_t SCREEN_SIZE = {1000.0, 500.0};
 static const vector_t INTERIOR_WALL_SIZE = {50.0, 200.0};
 static const double EXTERIOR_WALL_THICKNESS = 100.0;
 static const rgb_color_t WALL_COLOR = {1.0, 1.0, 1.0};
-static const size_t NUM_WALLS = 8;
-static const size_t NUM_INTERIOR_WALLS = 4;
+static const size_t NUM_BOUNDARIES = 4;
+static const size_t NUM_INTERIOR_WALLS = 9;
 static const uint8_t WALL_INFO =
-    0; // address of BULLET_INFO specifies body is a bullet
+    0; // address of WALL_INFO specifies body is a wall
 
 static const vector_t BULLET_SIZE = {10.0, 5.0};
 static const double BULLET_MASS = 1.0;
@@ -103,7 +103,7 @@ state_t *emscripten_init() {
   state_t *state = malloc_safe(sizeof(state_t));
   state->scene = scene_init();
 
-  list_t *walls = list_init(NUM_WALLS, free);
+  list_t *walls = list_init(NUM_BOUNDARIES + NUM_INTERIOR_WALLS, free);
 
   // TODO: create walls
   // Top wall
@@ -142,19 +142,45 @@ state_t *emscripten_init() {
   body_set_centroid(right_wall, right_wall_centroid);
   list_add(walls, right_wall);
 
-  // Generate interior walls
+  vector_t wall_positions[NUM_INTERIOR_WALLS] = {
+      {.x = 150, .y = 100},
+      {.x = 850, .y = 100},
+      {.x = 150, .y = 400},
+      {.x = 850, .y = 400},
+      {.x = 350, .y = 250},
+      {.x = 650, .y = 250},
+      {.x = 500, .y = 100},
+      {.x = 500, .y = 400},
+      {.x = 750, .y = 250}
+  };
+
+  int rotations[] = {0, 1, 0, 1, 0, 1, 0, 1, 1}; // 0 for vertical, 1 for horizontal
+
+  // Generate walls
   for (size_t i = 0; i < NUM_INTERIOR_WALLS; i++) {
-    body_t *interior_wall = body_init_with_info(shape_rectangle(INTERIOR_WALL_SIZE),
-        INFINITY, WALL_COLOR, (void *)&WALL_INFO, NULL);
-    
-    vector_t wall_position = {
-        .x = (i + 1) * SCREEN_SIZE.x / (NUM_INTERIOR_WALLS + 1),
-        .y = SCREEN_SIZE.y / 2
-    };
-    
-    body_set_centroid(interior_wall, wall_position);
-    list_add(walls, interior_wall);
+      body_t *interior_wall = body_init_with_info(shape_rectangle(INTERIOR_WALL_SIZE),
+          INFINITY, WALL_COLOR, (void *)&WALL_INFO, NULL);
+
+      body_set_centroid(interior_wall, wall_positions[i]);
+
+      body_set_rotation(interior_wall, (double) rotations[i] * PI / 2);
+
+      list_add(walls, interior_wall);
   }
+
+  // // Generate interior walls
+  // for (size_t i = 0; i < NUM_INTERIOR_WALLS; i++) {
+  //   body_t *interior_wall = body_init_with_info(shape_rectangle(INTERIOR_WALL_SIZE),
+  //       INFINITY, WALL_COLOR, (void *)&WALL_INFO, NULL);
+    
+  //   vector_t wall_position = {
+  //       .x = (i + 1) * SCREEN_SIZE.x / (NUM_INTERIOR_WALLS + 1),
+  //       .y = SCREEN_SIZE.y / 2
+  //   };
+    
+  //   body_set_centroid(interior_wall, wall_position);
+  //   list_add(walls, interior_wall);
+  // }
 
 
   state->map.walls = walls;
@@ -180,7 +206,7 @@ state_t *emscripten_init() {
   create_drag(state->scene, TANK_DRAG, state->tank_2.body);
 
   // Set collisions
-  for (size_t i = 0; i < NUM_WALLS; i++) {
+  for (size_t i = 0; i < NUM_BOUNDARIES + NUM_INTERIOR_WALLS; i++) {
     scene_add_body(state->scene, list_get(walls, i));
     create_physics_collision(state->scene, ELASTICITY, state->tank_1.body,
                              list_get(walls, i));
