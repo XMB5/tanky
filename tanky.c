@@ -24,12 +24,13 @@ static const rgb_color_t WALL_COLOR = {1.0, 1.0, 1.0};
 static const size_t NUM_WALLS = 8;
 static const size_t NUM_INTERIOR_WALLS = 4;
 
-static const vector_t BULLET_SIZE = {20.0, 10.0};
+static const vector_t BULLET_SIZE = {10.0, 5.0};
 static const double BULLET_MASS = 1.0;
 static const double BULLET_RADIUS = 5.0;
-static const vector_t BULLET_VELOCITY = {0.0, 200.0};
+static const double BULLET_OFFSET_RATIO = 1.25;
+static const double  BULLET_SPEED = -200.0;
 static const vector_t BULLET_INITIAL_VEL = {250.0, -400.0};
-static const rgb_color_t BULLET_COLOR = {1.0, 1.0, 0.0};
+static const rgb_color_t BULLET_COLOR = {1.0, 1.0, 1.0};
 static const uint8_t BULLET_INFO =
     0; // address of BULLET_INFO specifies body is a bullet
 
@@ -215,13 +216,6 @@ state_t *emscripten_init() {
   state->tank_2.was_shot = malloc(sizeof(bool));
   *state->tank_2.was_shot = false;
 
-  // collisions
-  // create_physics_collision(state->scene, 0.0, state->map->walls,
-  // state->tank_1.body); create_physics_collision(state->scene, 0.0,
-  // state->map->walls, state->tank_2.body);
-  // create_physics_collision(state->scene, ELASTICITY, state->map->obstacles,
-  // state->tank_1.body); create_physics_collision(state->scene, ELASTICITY,
-  // state->map->obstacles, state->tank_2.body);
   create_physics_collision(state->scene, ELASTICITY, state->tank_1.body,
                            state->tank_2.body);
 
@@ -250,30 +244,25 @@ static void shoot_bullet(state_t *state, tank_t *tank) {
   body_t *bullet =
       body_init_with_info(shape_circle_create(BULLET_RADIUS), BULLET_MASS,
                           BULLET_COLOR, (void *)&BULLET_INFO, NULL);
-  body_set_rotation(bullet, body_get_angle(tank->body));
-  body_set_centroid(bullet, (vector_t){body_get_centroid(tank->body).x,
-                                       body_get_centroid(tank->body).y});
-  body_set_velocity(bullet, BULLET_VELOCITY);
+  double angle = body_get_angle(tank->body);
+  double bullet_offset = TANK_SIZE.y*BULLET_OFFSET_RATIO/2;
+  if (body_get_info(tank->body) == &TANK1_INFO) {
+    angle += PI;
+  }
+  double bullet_x = body_get_centroid(tank->body).x - (cos(angle)*bullet_offset);
+  double bullet_y = body_get_centroid(tank->body).y - (sin(angle)*bullet_offset);
+  body_set_centroid(bullet, (vector_t){bullet_x, bullet_y});
+  body_set_velocity(bullet, (vector_t){BULLET_SPEED * cos(angle), BULLET_SPEED * sin(angle)});
+  
 
   if (body_get_info(tank->body) == &TANK1_INFO) {
-    // create_destructive_collision(state->scene, state->tank_2.body, bullet);
     create_bullet_collision(state->scene, state->tank_2.body, bullet,
                             state->tank_2.health, state->tank_2.was_shot);
   } else if (body_get_info(tank->body) == &TANK2_INFO) {
-    // create_destructive_collision(state->scene, state->tank_1.body, bullet);
     create_bullet_collision(state->scene, state->tank_1.body, bullet,
                             state->tank_1.health, state->tank_1.was_shot);
   }
 
-  // size_t num_bodies = scene_bodies(state->scene);
-  // for (size_t i = 0; i < num_bodies; i++) {
-  //   body_t *body = scene_get_body(state->scene, i);
-  //   if (body_get_info(body) == &TANK1_INFO) {
-  //     create_destructive_collision(state->scene, body, bullet);
-  //   } else if (body_get_info(body) == &TANK2_INFO) {
-  //     create_destructive_collision(state->scene, body, bullet);
-  //   }
-  // }
   scene_add_body(state->scene, bullet);
 }
 
