@@ -18,9 +18,11 @@
 static const unsigned int RANDOM_SEED = 12346; // srand takes unsigned int
 static const vector_t SCREEN_SIZE = {1000.0, 500.0};
 
+static const vector_t INTERIOR_WALL_SIZE = {50.0, 200.0};
 static const double EXTERIOR_WALL_THICKNESS = 100.0;
-static const rgb_color_t WALL_COLOR = {0.0, 0.0, 0.0};
-static const size_t NUM_WALLS = 4;
+static const rgb_color_t WALL_COLOR = {1.0, 1.0, 1.0};
+static const size_t NUM_WALLS = 8;
+static const size_t NUM_INTERIOR_WALLS = 4;
 
 static const vector_t BULLET_SIZE = {20.0, 10.0};
 static const double BULLET_MASS = 1.0;
@@ -39,11 +41,11 @@ static const double TANK_FORCE = 2000.0;
 static const double TANK_ANGULAR_VEL = M_PI;
 static const vector_t TANK_IMAGE_OFFSET = (vector_t){0.0, 5.0};
 
-static const vector_t TANK1_INITIAL_POSITION = {400.0, 300.0};
+static const vector_t TANK1_INITIAL_POSITION = {100.0, 300.0};
 static const uint8_t TANK1_INFO =
     0; // address of TANK1_INFO specifies body is TANK1
 
-static const vector_t TANK2_INITIAL_POSITION = {800.0, 300.0};
+static const vector_t TANK2_INITIAL_POSITION = {900.0, 300.0};
 static const uint8_t TANK2_INFO =
     0; // address of TANK2_INFO specifies body is TANK2
 
@@ -137,6 +139,20 @@ state_t *emscripten_init() {
   body_set_centroid(right_wall, right_wall_centroid);
   list_add(walls, right_wall);
 
+  // Generate interior walls
+  for (size_t i = 0; i < NUM_INTERIOR_WALLS; i++) {
+    body_t *interior_wall = body_init(shape_rectangle(INTERIOR_WALL_SIZE), INFINITY, WALL_COLOR);
+    
+    vector_t wall_position = {
+        .x = (i + 1) * SCREEN_SIZE.x / (NUM_INTERIOR_WALLS + 1),
+        .y = SCREEN_SIZE.y / 2
+    };
+    
+    body_set_centroid(interior_wall, wall_position);
+    list_add(walls, interior_wall);
+  }
+
+
   state->map.walls = walls;
 
   // create tanks
@@ -160,12 +176,13 @@ state_t *emscripten_init() {
   create_drag(state->scene, TANK_DRAG, state->tank_2.body);
 
   // Set collisions
-  for (size_t i = 0; i < NUM_WALLS; i ++) {
+  for (size_t i = 0; i < NUM_WALLS; i++) {
     scene_add_body(state->scene, list_get(walls, i));
-    create_physics_collision(state->scene, ELASTICITY, state->tank_1.body, list_get(walls, i));
-    create_physics_collision(state->scene, ELASTICITY, state->tank_2.body, list_get(walls, i));
+    create_physics_collision(state->scene, ELASTICITY, state->tank_1.body,
+                             list_get(walls, i));
+    create_physics_collision(state->scene, ELASTICITY, state->tank_2.body,
+                             list_get(walls, i));
   }
-
 
   // create health bars
   size_t *health1 = malloc(sizeof(size_t)); // needs to be freed at some point
