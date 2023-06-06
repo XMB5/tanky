@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <util.h>
 #include <vector.h>
+#include <sound.h>
 
 static const unsigned int RANDOM_SEED = 12346; // srand takes unsigned int
 static const vector_t SCREEN_SIZE = {1000.0, 500.0};
@@ -104,6 +105,7 @@ state_t *emscripten_init() {
   sdl_init(VEC_ZERO, SCREEN_SIZE);
   image_init();
   font_init();
+  sound_init();
   srand(RANDOM_SEED);
 
   state_t *state = malloc_safe(sizeof(state_t));
@@ -271,6 +273,7 @@ static void update_health_bar(state_t *state, tank_t tank) {
 }
 
 static void shoot_bullet(state_t *state, tank_t *tank) {
+  sound_play("minigun");
   body_t *bullet =
       body_init_with_info(shape_circle_create(BULLET_RADIUS), BULLET_MASS,
                           COLOR_WHITE, (void *)&BULLET_INFO, NULL);
@@ -435,4 +438,5 @@ void emscripten_free(state_t *state) {
   free(state);
   image_deinit();
   font_deinit();
+  sound_deinit();
 }

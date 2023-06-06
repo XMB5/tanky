@@ -2,7 +2,7 @@
 STAFF_LIBS = test_util sdl_wrapper
 # List of C files in "libraries" that you will write.
 # This also defines the order in which the tests are run.
-STUDENT_LIBS = list vector polygon body scene forces collision shape util color image font
+STUDENT_LIBS = list vector polygon body scene forces collision shape util color image font sound
 
 # find <dir> is the command to find files in a directory
 # ! -name .gitignore tells find to ignore the .gitignore
@@ -57,7 +57,7 @@ LIB_MATH = -lm
 # Note that $(...) substitutes a variable's value, so this line is equivalent to
 # LIBS = -lm
 LIBS = $(LIB_MATH) $(shell sdl2-config --libs) -lSDL2_gfx
-LIBS_NATIVE_ONLY = -lSDL2_image -lSDL2_ttf
+LIBS_NATIVE_ONLY = -lSDL2_image -lSDL2_ttf -lSDL2_mixer
 
 # List of compiled .o files corresponding to STUDENT_LIBS, e.g. "out/vector.o".
 # Don't worry about the syntax; it's just adding "out/" to the start
