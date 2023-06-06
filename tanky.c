@@ -23,6 +23,8 @@ static const double EXTERIOR_WALL_THICKNESS = 100.0;
 static const rgb_color_t WALL_COLOR = {1.0, 1.0, 1.0};
 static const size_t NUM_WALLS = 8;
 static const size_t NUM_INTERIOR_WALLS = 4;
+static const uint8_t WALL_INFO =
+    0; // address of BULLET_INFO specifies body is a bullet
 
 static const vector_t BULLET_SIZE = {10.0, 5.0};
 static const double BULLET_MASS = 1.0;
@@ -107,42 +109,43 @@ state_t *emscripten_init() {
   // Top wall
   vector_t top_wall_centroid = {
       .x = SCREEN_SIZE.x / 2, .y = SCREEN_SIZE.y + EXTERIOR_WALL_THICKNESS / 2};
-  body_t *top_wall = body_init(
+  body_t *top_wall = body_init_with_info(
       shape_rectangle((vector_t){SCREEN_SIZE.x, EXTERIOR_WALL_THICKNESS}),
-      INFINITY, WALL_COLOR);
+      INFINITY, WALL_COLOR, (void *)&WALL_INFO, NULL);
   body_set_centroid(top_wall, top_wall_centroid);
   list_add(walls, top_wall);
 
   // Bottom wall
   vector_t bottom_wall_centroid = {.x = SCREEN_SIZE.x / 2,
                                    .y = -EXTERIOR_WALL_THICKNESS / 2};
-  body_t *bottom_wall = body_init(
+  body_t *bottom_wall = body_init_with_info(
       shape_rectangle((vector_t){SCREEN_SIZE.x, EXTERIOR_WALL_THICKNESS}),
-      INFINITY, WALL_COLOR);
+      INFINITY, WALL_COLOR, (void *)&WALL_INFO, NULL);
   body_set_centroid(bottom_wall, bottom_wall_centroid);
   list_add(walls, bottom_wall);
 
   // Left wall
   vector_t left_wall_centroid = {.x = -EXTERIOR_WALL_THICKNESS / 2,
                                  .y = SCREEN_SIZE.y / 2};
-  body_t *left_wall = body_init(
+  body_t *left_wall = body_init_with_info(
       shape_rectangle((vector_t){EXTERIOR_WALL_THICKNESS, SCREEN_SIZE.y}),
-      INFINITY, WALL_COLOR);
+      INFINITY, WALL_COLOR, (void *)&WALL_INFO, NULL);
   body_set_centroid(left_wall, left_wall_centroid);
   list_add(walls, left_wall);
 
   // Right wall
   vector_t right_wall_centroid = {
       .x = SCREEN_SIZE.x + EXTERIOR_WALL_THICKNESS / 2, .y = SCREEN_SIZE.y / 2};
-  body_t *right_wall = body_init(
+  body_t *right_wall = body_init_with_info(
       shape_rectangle((vector_t){EXTERIOR_WALL_THICKNESS, SCREEN_SIZE.y}),
-      INFINITY, WALL_COLOR);
+      INFINITY, WALL_COLOR, (void *)&WALL_INFO, NULL);
   body_set_centroid(right_wall, right_wall_centroid);
   list_add(walls, right_wall);
 
   // Generate interior walls
   for (size_t i = 0; i < NUM_INTERIOR_WALLS; i++) {
-    body_t *interior_wall = body_init(shape_rectangle(INTERIOR_WALL_SIZE), INFINITY, WALL_COLOR);
+    body_t *interior_wall = body_init_with_info(shape_rectangle(INTERIOR_WALL_SIZE),
+        INFINITY, WALL_COLOR, (void *)&WALL_INFO, NULL);
     
     vector_t wall_position = {
         .x = (i + 1) * SCREEN_SIZE.x / (NUM_INTERIOR_WALLS + 1),
