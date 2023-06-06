@@ -323,8 +323,7 @@ static void tank_dead(state_t *state, tank_t tank) {
     state->tank_2.points = state->tank_2.points + 1;
     body_set_centroid(state->tank_1.body, TANK1_INITIAL_POSITION);
     // TODO: CLEAR BULLETS
-  }
-  else if (body_get_info(tank.body) == &TANK2_INFO) {
+  } else if (body_get_info(tank.body) == &TANK2_INFO) {
     state->tank_1.points = state->tank_1.points + 1;
     body_set_centroid(state->tank_2.body, TANK2_INITIAL_POSITION);
     // TODO: CLEAR BULLETS
