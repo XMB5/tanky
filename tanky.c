@@ -58,7 +58,7 @@ static const vector_t OBSTACLE_SIZE = {25.0, 25.0};
 static const int NUM_OBSTACLES = 10;
 static const double OBSTACLE_MASS = 400.0;
 static const double OBSTACLE_ELASTICITY = 0.7;
-static const double SHOOT_INTERVAL = 1.35; // sec
+static const double SHOOT_INTERVAL = 1.40; // sec
 
 static const rgb_color_t TEXT_COLOR = {0.392, 0.584, 0.929};
 
@@ -264,6 +264,7 @@ static void shoot_bullet(state_t *state, tank_t *tank) {
   body_set_centroid(bullet, (vector_t){bullet_x, bullet_y});
   body_set_velocity(
       bullet, (vector_t){BULLET_SPEED * cos(angle), BULLET_SPEED * sin(angle)});
+  
 
   tank->shot_cooldown = SHOOT_INTERVAL;
   if (tank == &state->tank_1) {
@@ -271,11 +272,13 @@ static void shoot_bullet(state_t *state, tank_t *tank) {
                                  state->tank_2.health, state->tank_2.was_shot);
     create_newtonian_gravity(state->scene, BULLET_GRAVITY, state->tank_2.body,
                              bullet);
+    body_set_image(bullet, "barrelBlack_top", .28);
   } else if (tank == &state->tank_2) {
     create_bullet_tank_collision(state->scene, state->tank_1.body, bullet,
                                  state->tank_1.health, state->tank_1.was_shot);
     create_newtonian_gravity(state->scene, BULLET_GRAVITY, state->tank_1.body,
                              bullet);
+    body_set_image(bullet, "barrelRust_top", .28);
   }
 
   // wall and obstacle collisions
