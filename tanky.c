@@ -310,9 +310,11 @@ static void tank_dead(state_t *state, tank_t *tank) {
   if (tank == &state->tank_1) {
     state->tank_2.points = state->tank_2.points + 1;
     body_set_centroid(state->tank_1.body, TANK1_INITIAL_POSITION);
+    body_set_rotation(state->tank_1.body, 0);
   } else if (tank == &state->tank_2) {
     state->tank_1.points = state->tank_1.points + 1;
     body_set_centroid(state->tank_2.body, TANK2_INITIAL_POSITION);
+    body_set_rotation(state->tank_2.body, PI);
   }
   clear_bullets(state);
 }
