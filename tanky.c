@@ -44,7 +44,7 @@ static const vector_t TANK_IMAGE_OFFSET = (vector_t){0.0, 5.0};
 static const vector_t TANK1_INITIAL_POSITION = {80.0, 250.0};
 static const vector_t TANK2_INITIAL_POSITION = {920.0, 250.0};
 
-static const double ELASTICITY = 7.5;
+static const double ELASTICITY = 3.0;
 
 static const size_t POINTS_PER_BULLET = 1;
 
@@ -57,7 +57,7 @@ static const rgb_color_t HEALTH_BAR_COLOR = {0.0, 1.0, 0.0};
 
 static const vector_t OBSTACLE_SIZE = {25.0, 25.0};
 static const int NUM_OBSTACLES = 10;
-static const double OBSTACLE_MASS = 100.0;
+static const double OBSTACLE_MASS = 300.0;
 static const double OBSTACLE_ELASTICITY = 0.7;
 static const double SHOOT_INTERVAL = 1.5; // sec
 
