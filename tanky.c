@@ -20,15 +20,12 @@
 static const unsigned int RANDOM_SEED = 12345; // srand takes unsigned int
 static const vector_t SCREEN_SIZE = {1000.0, 500.0};
 
-static const vector_t BULLET_SIZE = {10.0, 5.0};
 static const double BULLET_MASS = .1;
 static const double BULLET_ELASTICITY = 1.0;
 static const double BULLET_RADIUS = 5.0;
 static const double BULLET_OFFSET_RATIO = 1.25;
 static const double BULLET_SPEED = 300.0;
 static const double BULLET_GRAVITY = 100000.0;
-static const vector_t BULLET_INITIAL_VEL = {250.0, -400.0};
-static const vector_t BULLET_IMAGE_OFFSET = (vector_t){0.0, 5.0};
 static const char *BODY_TYPE_BULLET = "bullet";
 static const char *BODY_TYPE_TANK = "tank";
 
@@ -45,8 +42,6 @@ static const vector_t TANK2_INITIAL_POSITION = {920.0, 250.0};
 
 static const double ELASTICITY = 3.0;
 
-static const size_t POINTS_PER_BULLET = 1;
-
 static const size_t HEALTH_BAR_MAX_POINTS = 10;
 static const double HEALTH_BAR_UNIT_LENGTH = 5.0;
 static const double HEALTH_BAR_HEIGHT = 3.0;
@@ -54,9 +49,7 @@ static const double HEALTH_BAR_MASS = 1.0;
 static const vector_t HEALTH_BAR_TANK_OFFSET = {0.0, 40.0};
 static const rgb_color_t HEALTH_BAR_COLOR = {0.0, .76, 0.0};
 
-static const vector_t OBSTACLE_SIZE = {25.0, 25.0};
 static const int NUM_OBSTACLES = 10;
-static const double OBSTACLE_MASS = 400.0;
 static const double OBSTACLE_ELASTICITY = 0.7;
 static const double SHOOT_INTERVAL = 1.40; // sec
 
