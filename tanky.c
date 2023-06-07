@@ -340,12 +340,24 @@ void emscripten_main(state_t *state) {
     body_add_force(state->tank_1.body, force);
   }
 
+  double tank1_angular_vel = 0.0;
   if (sdl_get_key_pressed('d')) {
-    body_set_angular_velocity(state->tank_1.body, -TANK_ANGULAR_VEL);
+    tank1_angular_vel = -TANK_ANGULAR_VEL;
   } else if (sdl_get_key_pressed('a')) {
-    body_set_angular_velocity(state->tank_1.body, TANK_ANGULAR_VEL);
-  } else {
-    body_set_angular_velocity(state->tank_1.body, 0.0);
+    tank1_angular_vel = TANK_ANGULAR_VEL;
+  }
+  double tank1_dtheta = tank1_angular_vel * dt;
+  body_set_rotation(state->tank_1.body, state->tank_1.body->angle + tank1_dtheta);
+  size_t num_bodies = scene_bodies(state->scene);
+  for (size_t i = 0; i < num_bodies; i++) {
+    body_t *body = scene_get_body(state->scene, i);
+    if (body->type == BODY_TYPE_WALL) {
+      collision_info_t collision = find_collision(body->shape, state->tank_1.body->shape);
+      if (collision.collided) {
+        body_set_rotation(state->tank_1.body, state->tank_1.body->angle - tank1_dtheta);
+        break;
+      }
+    }
   }
 
   const size_t MAX_STR_SIZE = 256;
