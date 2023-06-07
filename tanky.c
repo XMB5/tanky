@@ -59,7 +59,6 @@ static const vector_t OBSTACLE_SIZE = {25.0, 25.0};
 static const int NUM_OBSTACLES = 10;
 static const double OBSTACLE_MASS = 100.0;
 static const double OBSTACLE_ELASTICITY = 0.7;
-
 static const double SHOOT_INTERVAL = 1.5; // sec
 
 static const rgb_color_t TEXT_COLOR = {0.392, 0.584, 0.929};
@@ -393,6 +392,19 @@ void emscripten_main(state_t *state) {
                           state->tank_1.body->angle - tank1_dtheta);
         break;
       }
+    }
+  }
+
+  
+  static bool just_reset = false;
+  if (sdl_get_key_pressed('u')) {
+    if(!just_reset){
+      reset();
+      just_reset = true;
+
+    }
+    else{
+      just_reset = false;
     }
   }
 
