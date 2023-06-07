@@ -4,8 +4,8 @@
 #include <body.h>
 #include <util.h>
 
-static const vector_t SMALL_INTERIOR_WALL_SIZE = {50.0, 200.0};
-static const vector_t LARGE_INTERIOR_WALL_SIZE = {50.0, 300.0};
+static const vector_t SMALL_INTERIOR_WALL_SIZE = {56.0, 224.0};
+static const vector_t LARGE_INTERIOR_WALL_SIZE = {56.0, 336.0};
 static const double EXTERIOR_WALL_THICKNESS = 100.0;
 static const rgb_color_t WALL_COLOR = {1.0, 1.0, 1.0};
 static const size_t NUM_BOUNDARIES = 4;
@@ -74,6 +74,11 @@ void map_add_walls(scene_t *scene, vector_t screen_size) {
   for (size_t i = 0; i < NUM_INTERIOR_WALLS; i++) {
     body_t *interior_wall = body_init_with_info(
         shape_rectangle(wall_sizes[i]), INFINITY, WALL_COLOR, BODY_TYPE_WALL);
+    if (wall_sizes[i].y == LARGE_INTERIOR_WALL_SIZE.y) {
+        body_set_image(interior_wall, "wall_large", 1.0);
+    } else {
+        body_set_image(interior_wall, "wall_small", 1.0);
+    }
 
     body_set_centroid(interior_wall, wall_positions[i]);
 

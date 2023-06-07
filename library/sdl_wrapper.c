@@ -230,6 +230,7 @@ void sdl_render_scene(scene_t *scene) {
     dstrect.x = centroid_window.x - center.x;
     dstrect.y = centroid_window.y - center.y;
     SDL_RenderCopyExF(renderer, to_draw->image->texture, NULL, &dstrect, -to_draw->rotation / PI * 180.0, &center, 0);
+    free(to_draw);
   }
 
   // draw bodies
