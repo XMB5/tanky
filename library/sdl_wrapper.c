@@ -230,6 +230,7 @@ void sdl_render_scene(scene_t *scene) {
     dstrect.x = centroid_window.x - center.x;
     dstrect.y = centroid_window.y - center.y;
     SDL_RenderCopyExF(renderer, to_draw->image->texture, NULL, &dstrect, -to_draw->rotation / PI * 180.0, &center, 0);
+  }
 
   // draw bodies
   size_t body_count = scene_bodies(scene);
@@ -265,7 +266,7 @@ void sdl_render_scene(scene_t *scene) {
     font_render(to_draw->text, get_window_position(to_draw->top_left, window_center), to_draw->color);
     scene_text_to_draw_free(to_draw);
   }
-  }
+  
   sdl_show();
 }
 
