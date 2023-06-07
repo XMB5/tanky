@@ -320,12 +320,14 @@ static void tank_dead(state_t *state, tank_t *tank) {
 }
 
 static void reset (state_t *state) {
-  // Resets obstacles
   map_reset_obstacles(state->scene, SCREEN_SIZE, NUM_OBSTACLES);
 
-  // Resets players and bullets
+  // Reset players and bullets
   tank_dead(state, &state->tank_1);
   tank_dead(state, &state->tank_2);
+
+  state->tank_1.points = 0;
+  state->tank_2.points = 0;
 }
 
 void emscripten_main(state_t *state) {
@@ -428,9 +430,6 @@ void emscripten_main(state_t *state) {
     if(!just_reset){
       reset(state);
       just_reset = true;
-      state->tank_1.points = 0;
-      state->tank_2.points = 0;
-
     }
   }
   else{
