@@ -241,12 +241,15 @@ static void update_health_bar(state_t *state, tank_t *tank) {
 }
 
 static void shoot_bullet(state_t *state, tank_t *tank) {
+  
   sound_play("minigun");
   body_t *bullet =
       body_init_with_info(shape_circle_create(BULLET_RADIUS), BULLET_MASS,
                           COLOR_WHITE, BODY_TYPE_BULLET);
   double angle = body_get_angle(tank->body);
   double bullet_offset = TANK_SIZE.y * BULLET_OFFSET_RATIO / 2;
+  bullet->info = malloc_safe(sizeof(size_t));
+  *(size_t*) bullet->info = 0;
   double bullet_x =
       body_get_centroid(tank->body).x + (cos(angle) * bullet_offset);
   double bullet_y =
@@ -273,7 +276,7 @@ static void shoot_bullet(state_t *state, tank_t *tank) {
   for (size_t i = 0; i < num_bodies; i++) {
     body_t *body = scene_get_body(state->scene, i);
     if (body->type == BODY_TYPE_WALL) {
-      create_physics_collision(state->scene, BULLET_ELASTICITY, body, bullet);
+      create_bullet_wall_collision(state->scene, BULLET_ELASTICITY, bullet, body);
     }
     if (body->type == BODY_TYPE_OBSTACLE) {
       create_bullet_obstacle_collision(state->scene, body, bullet);

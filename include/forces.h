@@ -139,4 +139,10 @@ void create_physics_collision(scene_t *scene, double elasticity, body_t *body1,
 void physics_collision_handler(body_t *body1, body_t *body2, vector_t axis,
                                const double *elasticity);
 
+void bullet_collision_handler(body_t *bullet, body_t *wall, vector_t axis,
+                               const double *elasticity);
+
+void create_bullet_wall_collision(scene_t *scene, double elasticity, body_t *bullet,
+                              body_t *wall);
+
 #endif // #ifndef __FORCES_H__
