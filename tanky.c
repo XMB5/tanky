@@ -399,13 +399,13 @@ void emscripten_main(state_t *state) {
   static bool just_reset = false;
   if (sdl_get_key_pressed('u')) {
     if(!just_reset){
-      reset();
+      //reset();
       just_reset = true;
 
     }
-    else{
+  }
+  else{
       just_reset = false;
-    }
   }
 
   const size_t MAX_STR_SIZE = 256;
