@@ -91,8 +91,6 @@ state_t *emscripten_init() {
   state_t *state = malloc_safe(sizeof(state_t));
   state->scene = scene_init();
 
-  map_add_walls(state->scene, SCREEN_SIZE);
-
   // create tanks
   state->tank_1.body =
       body_init_with_info(shape_rectangle(TANK_SIZE), TANK_MASS, COLOR_WHITE, BODY_TYPE_TANK);
@@ -110,6 +108,8 @@ state_t *emscripten_init() {
   body_set_image_offset(state->tank_2.body, TANK_IMAGE_OFFSET);
   create_drag(state->scene, TANK_DRAG, state->tank_1.body);
   create_drag(state->scene, TANK_DRAG, state->tank_2.body);
+
+  map_add_walls(state->scene, SCREEN_SIZE);
 
   // create health bars
   size_t *health1 = malloc(sizeof(size_t)); // needs to be freed at some point
