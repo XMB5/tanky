@@ -31,7 +31,6 @@ static const vector_t BULLET_INITIAL_VEL = {250.0, -400.0};
 static const vector_t BULLET_IMAGE_OFFSET = (vector_t){0.0, 5.0};
 static const char *BODY_TYPE_BULLET = "bullet";
 static const char *BODY_TYPE_TANK = "tank";
-static const char *BODY_TYPE_OBSTACLE = "obstacle";
 
 static const vector_t TANK_SIZE = {40.0, 40.0};
 static const double TANK_MASS = 10.0;
@@ -139,45 +138,46 @@ state_t *emscripten_init() {
   state->tank_2.was_shot = malloc(sizeof(bool));
   *state->tank_2.was_shot = false;
 
-  // create obstacles
-  size_t num_obstacles_created = 0;
-  list_t *obstacles = list_init(NUM_OBSTACLES, free);
-  while (num_obstacles_created < NUM_OBSTACLES) {
-    double x_coord = rand_range(0, SCREEN_SIZE.x);
-    double y_coord = rand_range(0, SCREEN_SIZE.y);
-    body_t *obstacle =
-        body_init_with_info(shape_rectangle(OBSTACLE_SIZE), OBSTACLE_MASS,
-                            COLOR_WHITE, BODY_TYPE_OBSTACLE);
-    const char *barricadeImages[] = {"barricadeWood", "barricadeMetal", "crateWood"};
-    const char *barricadeImage = barricadeImages[rand() % 3];
-    body_set_image(obstacle, barricadeImage, 0.5);
-    body_set_centroid(obstacle, (vector_t){x_coord, y_coord});
-    list_add(obstacles, obstacle);
-    scene_add_body(state->scene, obstacle);
-    create_drag(state->scene, 500.0, obstacle);
+  map_init_obstacles(state->scene, SCREEN_SIZE, NUM_OBSTACLES);
+  // // create obstacles
+  // size_t num_obstacles_created = 0;
+  // list_t *obstacles = list_init(NUM_OBSTACLES, free);
+  // while (num_obstacles_created < NUM_OBSTACLES) {
+  //   double x_coord = rand_range(0, SCREEN_SIZE.x);
+  //   double y_coord = rand_range(0, SCREEN_SIZE.y);
+  //   body_t *obstacle =
+  //       body_init_with_info(shape_rectangle(OBSTACLE_SIZE), OBSTACLE_MASS,
+  //                           COLOR_WHITE, BODY_TYPE_OBSTACLE);
+  //   const char *barricadeImages[] = {"barricadeWood", "barricadeMetal", "crateWood"};
+  //   const char *barricadeImage = barricadeImages[rand() % 3];
+  //   body_set_image(obstacle, barricadeImage, 0.5);
+  //   body_set_centroid(obstacle, (vector_t){x_coord, y_coord});
+  //   list_add(obstacles, obstacle);
+  //   scene_add_body(state->scene, obstacle);
+  //   create_drag(state->scene, 500.0, obstacle);
 
-    size_t num_bodies = scene_bodies(state->scene);
+  //   size_t num_bodies = scene_bodies(state->scene);
 
-    bool obstacle_collides = false;
-    for (size_t i = 0; i < num_bodies; i++) {
-      body_t *body = scene_get_body(state->scene, i);
-      if (body != obstacle) {
-        collision_info_t collision = body_collide(obstacle, body);
-        if (collision.collided) {
-          obstacle_collides = true;
-          break;
-        }
-      }
-    }
+  //   bool obstacle_collides = false;
+  //   for (size_t i = 0; i < num_bodies; i++) {
+  //     body_t *body = scene_get_body(state->scene, i);
+  //     if (body != obstacle) {
+  //       collision_info_t collision = body_collide(obstacle, body);
+  //       if (collision.collided) {
+  //         obstacle_collides = true;
+  //         break;
+  //       }
+  //     }
+  //   }
 
-    if (obstacle_collides) {
-      scene_remove_body(state->scene,
-                        num_bodies -
-                            1); // Remove newly placed obstacle, and try again
-    } else {
-      num_obstacles_created++;
-    }
-  }
+  //   if (obstacle_collides) {
+  //     scene_remove_body(state->scene,
+  //                       num_bodies -
+  //                           1); // Remove newly placed obstacle, and try again
+  //   } else {
+  //     num_obstacles_created++;
+  //   }
+  // }
 
   scene_add_body(state->scene, state->tank_1.body);
   scene_add_body(state->scene, state->tank_2.body);

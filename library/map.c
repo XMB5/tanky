@@ -1,5 +1,7 @@
 #include <map.h>
 #include <shape.h>
+#include <forces.h>
+#include <body.h>
 #include <util.h>
 
 static const vector_t SMALL_INTERIOR_WALL_SIZE = {50.0, 200.0};
@@ -9,7 +11,13 @@ static const rgb_color_t WALL_COLOR = {1.0, 1.0, 1.0};
 static const size_t NUM_BOUNDARIES = 4;
 static const size_t NUM_INTERIOR_WALLS = 8;
 
+static const vector_t OBSTACLE_SIZE = {25.0, 25.0};
+static const int NUM_OBSTACLES = 10;
+static const double OBSTACLE_MASS = 100.0;
+static const double OBSTACLE_ELASTICITY = 0.7;
+
 const char *BODY_TYPE_WALL = "wall";
+const char *BODY_TYPE_OBSTACLE = "obstacle";
 
 void map_add_walls(scene_t *scene, vector_t screen_size) {
   // Top wall
@@ -73,4 +81,53 @@ void map_add_walls(scene_t *scene, vector_t screen_size) {
 
     scene_add_body(scene, interior_wall);
   }
+}
+
+
+static bool obstacle_collides (body_t *obstacle, scene_t *scene) {
+    size_t num_bodies = scene_bodies(scene);
+    for (size_t i = 0; i < num_bodies; i++) {
+      body_t *body = scene_get_body(scene, i);
+      if (body != obstacle) {
+        collision_info_t collision = body_collide(obstacle, body);
+        if (collision.collided) {
+          return true;
+        }
+      }
+    }
+    return false;
+}
+
+static void move_obstacle_to_random_point (body_t *obstacle, vector_t screen_size) {
+    double x_coord = rand_range(0, screen_size.x);
+    double y_coord = rand_range(0, screen_size.y);
+    body_set_centroid(obstacle, (vector_t){x_coord, y_coord});
+}
+
+void map_init_obstacles(scene_t *scene, vector_t screen_size, size_t num_obstacles) {
+    for (size_t i = 0; i < NUM_OBSTACLES; i ++) {
+        body_t *obstacle =
+        body_init_with_info(shape_rectangle(OBSTACLE_SIZE), OBSTACLE_MASS,
+                            COLOR_WHITE, BODY_TYPE_OBSTACLE);
+        const char *barricadeImages[] = {"barricadeWood", "barricadeMetal", "crateWood"};
+        const char *barricadeImage = barricadeImages[rand() % 3];
+        body_set_image(obstacle, barricadeImage, 0.5);
+        scene_add_body(scene, obstacle);
+        create_drag(scene, 500.0, obstacle);
+    }
+
+    map_reset_obstacles(scene, screen_size, num_obstacles);
+}
+
+void map_reset_obstacles(scene_t *scene, vector_t screen_size, size_t num_obstacles) {
+    // First, get all obstacles
+    size_t num_bodies = scene_bodies(scene);
+    for (size_t i = 0; i < num_bodies; i++) {
+        body_t *body = scene_get_body(scene, i);
+        if (body->type == BODY_TYPE_OBSTACLE) {
+            while (obstacle_collides(body, scene)) {
+                move_obstacle_to_random_point(body, screen_size);
+            }
+        }
+    }
 }
