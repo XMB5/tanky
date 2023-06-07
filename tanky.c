@@ -70,8 +70,8 @@ static const uint8_t HEALTH_BAR_2_INFO = 0;
 
 static const vector_t OBSTACLE_SIZE = {25.0, 25.0};
 static const int NUM_OBSTACLES = 10;
-static const double OBSTACLE_MASS = 10.0;
-static const double OBSTACLE_ELASTICITY = 0.5;
+static const double OBSTACLE_MASS = 100.0;
+static const double OBSTACLE_ELASTICITY = 0.01;
 static const uint8_t OBSTACLE_INFO =
     0; // address of OBSTACLE_INFO specifies body is an obstacle
 
@@ -276,6 +276,18 @@ state_t *emscripten_init() {
                             1); // Remove newly placed obstacle, and try again
     } else {
       num_obstacles_created++;
+    }
+  }
+
+  for (size_t i = 0; i < NUM_OBSTACLES; i++) {
+    create_physics_collision(state->scene, ELASTICITY, state->tank_1.body,
+                             list_get(obstacles, i));
+    create_physics_collision(state->scene, ELASTICITY, state->tank_2.body,
+                             list_get(obstacles, i));
+
+    for (size_t j = 0; j < NUM_BOUNDARIES + NUM_INTERIOR_WALLS; j++) {
+      create_physics_collision(state->scene, ELASTICITY, list_get(walls, j),
+                               list_get(obstacles, i));
     }
   }
 
