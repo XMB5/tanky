@@ -294,18 +294,35 @@ static void shoot_bullet(state_t *state, tank_t *tank) {
   // body_set_image_offset(scene->bullet, BULLET_IMAGE_OFFSET);
 }
 
+static void clear_bullets (state_t *state) {
+  size_t num_bodies = scene_bodies(state->scene);
+  for (size_t i = 0; i < num_bodies; i++) {
+    if (body->type == BODY_TYPE_BULLET) {
+      body_remove(body);
+    }
+  }
+}
+
 static void tank_dead(state_t *state, tank_t *tank) {
   *tank->health = HEALTH_BAR_MAX_POINTS;
   update_health_bar(state, tank);
   if (tank == &state->tank_1) {
     state->tank_2.points = state->tank_2.points + 1;
     body_set_centroid(state->tank_1.body, TANK1_INITIAL_POSITION);
-    // TODO: CLEAR BULLETS
   } else if (tank == &state->tank_2) {
     state->tank_1.points = state->tank_1.points + 1;
     body_set_centroid(state->tank_2.body, TANK2_INITIAL_POSITION);
-    // TODO: CLEAR BULLETS
   }
+  clear_bullets(state);
+}
+
+static void reset (state_t *state) {
+  // Resets obstacles
+  map_reset_obstacles(state->scene, SCREEN_SIZE, NUM_OBSTACLES);
+
+  // Resets players and bullets
+  tank_dead(state, state->tank_1);
+  tank_dead(state, state->tank_2);
 }
 
 void emscripten_main(state_t *state) {
@@ -399,7 +416,7 @@ void emscripten_main(state_t *state) {
   static bool just_reset = false;
   if (sdl_get_key_pressed('u')) {
     if(!just_reset){
-      //reset();
+      reset(state);
       just_reset = true;
 
     }
