@@ -5,6 +5,7 @@
 #include <util.h>
 
 static const double GRAVITY_MIN_DISTANCE = 5.0;
+static const double MAX_BULLET_BOUNCES = 3.0;
 
 typedef struct {
   body_t *body1;
@@ -193,17 +194,35 @@ void create_destructive_collision(scene_t *scene, body_t *body1,
                    NULL);
 }
 
-static void bullet_collision_handler(body_t *tank, body_t *bullet, vector_t axis, bullet_aux_t *aux) {
+static void bullet_tank_collision_handler(body_t *tank, body_t *bullet,
+                                          vector_t axis, bullet_aux_t *aux) {
   *aux->health = *aux->health - 1;
   *aux->was_shot = true;
   body_remove(bullet);
 }
 
-void create_bullet_collision(scene_t *scene, body_t *tank, body_t *bullet, size_t *health, bool *was_shot) {
+void create_bullet_tank_collision(scene_t *scene, body_t *tank, body_t *bullet,
+                                  size_t *health, bool *was_shot) {
   bullet_aux_t *aux = malloc(sizeof(bullet_aux_t));
   aux->health = health;
   aux->was_shot = was_shot;
-  create_collision(scene, tank, bullet, (collision_handler_t)bullet_collision_handler, aux, free);
+  create_collision(scene, tank, bullet,
+                   (collision_handler_t)bullet_tank_collision_handler, aux,
+                   free);
+}
+
+static void bullet_obstacle_collision_handler(body_t *tank, body_t *bullet,
+                                              vector_t axis,
+                                              bullet_aux_t *aux) {
+  body_remove(bullet);
+}
+
+void create_bullet_obstacle_collision(scene_t *scene, body_t *tank,
+                                      body_t *bullet) {
+  bullet_aux_t *aux = malloc(sizeof(bullet_aux_t));
+  create_collision(scene, tank, bullet,
+                   (collision_handler_t)bullet_obstacle_collision_handler, aux,
+                   free);
 }
 
 void physics_collision_handler(body_t *body1, body_t *body2, vector_t axis,
@@ -236,3 +255,23 @@ void create_physics_collision(scene_t *scene, double elasticity, body_t *body1,
                    (collision_handler_t)physics_collision_handler,
                    elasticity_aux, free);
 }
+
+
+void bullet_collision_handler(body_t *bullet, body_t *wall, vector_t axis,
+                               const double *elasticity) {
+  *(size_t*)bullet->info += 1;
+  if(*(size_t*)bullet->info > MAX_BULLET_BOUNCES){
+    body_remove(bullet);
+  }
+  physics_collision_handler(bullet, wall, axis, elasticity);  
+}
+
+void create_bullet_wall_collision(scene_t *scene, double elasticity, body_t *bullet,
+                              body_t *wall) {
+  double *elasticity_aux = malloc_safe(sizeof(double));
+  *elasticity_aux = elasticity;
+  create_collision(scene, bullet, wall,
+                   (collision_handler_t)bullet_collision_handler,
+                   elasticity_aux, free);
+}
+
