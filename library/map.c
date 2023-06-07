@@ -120,11 +120,11 @@ void map_init_obstacles(scene_t *scene, vector_t screen_size, size_t num_obstacl
 }
 
 void map_reset_obstacles(scene_t *scene, vector_t screen_size, size_t num_obstacles) {
-    // First, get all obstacles
     size_t num_bodies = scene_bodies(scene);
     for (size_t i = 0; i < num_bodies; i++) {
         body_t *body = scene_get_body(scene, i);
         if (body->type == BODY_TYPE_OBSTACLE) {
+            move_obstacle_to_random_point(body, screen_size);
             while (obstacle_collides(body, scene)) {
                 move_obstacle_to_random_point(body, screen_size);
             }
