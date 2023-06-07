@@ -1,5 +1,5 @@
 #include "sdl_wrapper.h"
-#include <SDL2/SDL2_gfxPrimitives.h>
+#include <SDL2/SDL.h>
 #include <assert.h>
 #include <limits.h>
 #include <math.h>
@@ -173,23 +173,23 @@ void sdl_draw_polygon(list_t *points, rgb_color_t color) {
 
   vector_t window_center = get_window_center();
 
-  // Convert each vertex to a point on screen
-  int16_t *x_points = malloc(sizeof(*x_points) * n),
-          *y_points = malloc(sizeof(*y_points) * n);
-  assert(x_points != NULL);
-  assert(y_points != NULL);
-  for (size_t i = 0; i < n; i++) {
-    vector_t *vertex = list_get(points, i);
-    vector_t pixel = get_window_position(*vertex, window_center);
-    x_points[i] = pixel.x;
-    y_points[i] = pixel.y;
-  }
+  // we don't implement a general polygon->triangles algorithm, only for a rectangle
+  if (n == 4) {
+    SDL_Vertex vertices_poly[n];
+    for (size_t i = 0; i < n; i++) {
+      vector_t *vertex = list_get(points, i);
+      vector_t pixel = get_window_position(*vertex, window_center);
+      vertices_poly[i] = (SDL_Vertex) {{pixel.x, pixel.y}, {color.r * 255, color.g * 255, color.b * 255, 255}, {0, 0}};
+    }
 
-  // Draw polygon with the given color
-  filledPolygonRGBA(renderer, x_points, y_points, n, color.r * 255,
-                    color.g * 255, color.b * 255, 255);
-  free(x_points);
-  free(y_points);
+    SDL_Vertex vertices[] = {vertices_poly[0], vertices_poly[1], vertices_poly[2], vertices_poly[2], vertices_poly[3], vertices_poly[0]};
+
+    if (SDL_RenderGeometry(renderer, NULL, vertices, 6, NULL, 0) < 0) {
+      printf("render geometry failed %s\n", n, SDL_GetError());
+    }
+  } else {
+    printf("unimplemented rendering n=%zu sided polygon\n", n);
+  }
 }
 
 void sdl_show(void) {
