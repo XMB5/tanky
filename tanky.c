@@ -205,10 +205,6 @@ state_t *emscripten_init() {
   // Set collisions
   for (size_t i = 0; i < NUM_BOUNDARIES + NUM_INTERIOR_WALLS; i++) {
     scene_add_body(state->scene, list_get(walls, i));
-    create_physics_collision(state->scene, ELASTICITY, state->tank_1.body,
-                             list_get(walls, i));
-    create_physics_collision(state->scene, ELASTICITY, state->tank_2.body,
-                             list_get(walls, i));
   }
 
   // create health bars
@@ -241,9 +237,6 @@ state_t *emscripten_init() {
 
   state->tank_2.was_shot = malloc(sizeof(bool));
   *state->tank_2.was_shot = false;
-
-  create_physics_collision(state->scene, ELASTICITY, state->tank_1.body,
-                           state->tank_2.body);
 
   // create obstacles
   size_t num_obstacles_created = 0;
@@ -281,15 +274,40 @@ state_t *emscripten_init() {
     }
   }
 
-  for (size_t i = 0; i < NUM_OBSTACLES; i++) {
-    create_physics_collision(state->scene, ELASTICITY, state->tank_1.body,
-                             list_get(obstacles, i));
-    create_physics_collision(state->scene, ELASTICITY, state->tank_2.body,
-                             list_get(obstacles, i));
+  size_t num_bodies = scene_bodies(state->scene);
 
-    for (size_t j = 0; j < NUM_BOUNDARIES + NUM_INTERIOR_WALLS; j++) {
-      create_physics_collision(state->scene, ELASTICITY, list_get(walls, j),
-                               list_get(obstacles, i));
+  for (size_t i = 0; i < num_bodies; i++) {
+    body_t* body_1 = scene_get_body(state->scene, i);
+    bool body_1_is_tank = (body_get_info(body_1) == &TANK1_INFO) || (body_get_info(body_1) == &TANK2_INFO);
+    bool body_1_is_wall = (body_get_info(body_1) == &WALL_INFO);
+    bool body_1_is_obstacle = (body_get_info(body_1) == &OBSTACLE_INFO);
+    
+    for (size_t j = i+1; j < num_bodies; j++) {
+        body_t* body_2 = scene_get_body(state->scene, j);
+        bool body_2_is_tank = (body_get_info(body_2) == &TANK1_INFO) || (body_get_info(body_2) == &TANK2_INFO);
+        bool body_2_is_wall = (body_get_info(body_2) == &WALL_INFO);
+        bool body_2_is_obstacle = (body_get_info(body_2) == &OBSTACLE_INFO);
+
+        // Tank x tank
+        if ((body_1_is_tank && body_2_is_tank)) {
+          create_physics_collision(state->scene, ELASTICITY, body_1, body_2);
+        }
+
+        // Tank x wall
+        if ((body_1_is_tank && body_2_is_wall) || (body_1_is_wall && body_2_is_tank)) {
+          create_physics_collision(state->scene, ELASTICITY, body_1, body_2);
+        }
+
+        // Tank x obstacle
+        if ((body_1_is_tank && body_2_is_obstacle) || (body_1_is_obstacle && body_2_is_tank)) {
+          create_physics_collision(state->scene, ELASTICITY, body_1, body_2);
+        }
+
+        // Obstacle x wall
+        if ((body_1_is_obstacle && body_2_is_wall) || (body_1_is_wall && body_2_is_obstacle)) {
+          create_physics_collision(state->scene, ELASTICITY, body_1, body_2);
+        }
+
     }
   }
 
