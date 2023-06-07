@@ -16,7 +16,7 @@
 #include <util.h>
 #include <vector.h>
 
-static const unsigned int RANDOM_SEED = 12346; // srand takes unsigned int
+static const unsigned int RANDOM_SEED = 12345; // srand takes unsigned int
 static const vector_t SCREEN_SIZE = {1000.0, 500.0};
 
 static const vector_t INTERIOR_WALL_SIZE = {50.0, 200.0};
@@ -76,6 +76,8 @@ static const uint8_t OBSTACLE_INFO =
     0; // address of OBSTACLE_INFO specifies body is an obstacle
 
 static const double SHOOT_INTERVAL = 1.5; // sec
+
+static const rgb_color_t TEXT_COLOR = {0.392, 0.584, 0.929};
 
 typedef struct tank {
   body_t *body;
@@ -362,6 +364,7 @@ static void shoot_bullet(state_t *state, tank_t *tank) {
 
 static void tank_dead(state_t *state, tank_t tank) {
   *tank.health = HEALTH_BAR_MAX_POINTS;
+  update_health_bar(state, tank);
   if (body_get_info(tank.body) == &TANK1_INFO) {
     state->tank_2.points = state->tank_2.points + 1;
     body_set_centroid(state->tank_1.body, TANK1_INITIAL_POSITION);
@@ -431,16 +434,28 @@ void emscripten_main(state_t *state) {
   }
 
   const size_t MAX_STR_SIZE = 256;
-  char display_str[MAX_STR_SIZE];
+  // char display_str[MAX_STR_SIZE];
   vector_t tank_1_coords = body_get_centroid(state->tank_1.body);
   vector_t tank_2_coords = body_get_centroid(state->tank_2.body);
-  snprintf(display_str, MAX_STR_SIZE,
-           "tank coords: %f,%f\t blue tank points: %zu\t red tank points: "
-           "%zu\t blue tank shot: %d",
-           tank_1_coords.x, tank_1_coords.y, state->tank_2.points,
-           state->tank_1.points, *state->tank_2.was_shot);
-  vector_t text_top_left = {20, 480};
-  scene_draw_text(state->scene, display_str, text_top_left, COLOR_WHITE);
+  // snprintf(display_str, MAX_STR_SIZE,
+  //          "tank coords: %f,%f\t blue tank points: %zu\t red tank points: "
+  //          "%zu\t",
+  //          tank_1_coords.x, tank_1_coords.y, state->tank_2.points,
+  //          state->tank_1.points);
+  // vector_t text_top_left = {20, 480};
+  // scene_draw_text(state->scene, display_str, text_top_left, COLOR_WHITE);
+
+  char tank_1_points_str[MAX_STR_SIZE];
+  snprintf(tank_1_points_str, MAX_STR_SIZE,
+            "Red Tank Points: %zu", state->tank_1.points);
+  vector_t text_top_left = {200, 480};
+  scene_draw_text(state->scene, tank_1_points_str, text_top_left, TEXT_COLOR);
+
+  char tank_2_points_str[MAX_STR_SIZE];
+  snprintf(tank_2_points_str, MAX_STR_SIZE,
+            "Blue Tank Points: %zu", state->tank_2.points);
+  vector_t text_top_right = {600, 480};
+  scene_draw_text(state->scene, tank_2_points_str, text_top_right, TEXT_COLOR);
 
   body_set_centroid(state->tank_1.health_bar,
                     vec_add(tank_1_coords, HEALTH_BAR_TANK_OFFSET));
