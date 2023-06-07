@@ -28,10 +28,12 @@ void scene_text_to_draw_free(text_to_draw_t *text_to_draw) {
   free(text_to_draw);
 }
 
+
 struct scene {
   list_t *bodies;
   list_t *force_creators;
   list_t *texts_to_draw;
+  list_t *images_to_draw;
 };
 
 scene_t *scene_init(void) {
@@ -40,6 +42,7 @@ scene_t *scene_init(void) {
   scene->force_creators =
       list_init(INITIAL_LIST_CAPACITY, (free_func_t)force_info_free);
   scene->texts_to_draw = list_init(INITIAL_LIST_CAPACITY, (free_func_t)scene_text_to_draw_free);
+  scene->images_to_draw = list_init(INITIAL_LIST_CAPACITY, (free_func_t)free);
   return scene;
 }
 
@@ -47,6 +50,7 @@ void scene_free(scene_t *scene) {
   list_free(scene->bodies);
   list_free(scene->force_creators);
   list_free(scene->texts_to_draw);
+  list_free(scene->images_to_draw);
   free(scene);
 }
 
@@ -119,6 +123,19 @@ void scene_draw_text(scene_t *scene, const char *text, vector_t top_left, rgb_co
 
 list_t *scene_get_texts_to_draw(scene_t *scene) {
   return scene->texts_to_draw;
+}
+
+void scene_draw_image(scene_t *scene, image_t *image, vector_t pos, double scale, double rotation) {
+  image_to_draw_t *to_draw = malloc_safe(sizeof(image_to_draw_t));
+  to_draw->image = image;
+  to_draw->pos = pos;
+  to_draw->scale = scale;
+  to_draw->rotation = rotation;
+  list_add(scene->images_to_draw, to_draw);
+}
+
+list_t *scene_get_images_to_draw(scene_t *scene) {
+  return scene->images_to_draw;
 }
 
 void scene_tick(scene_t *scene, double dt) {

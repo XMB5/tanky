@@ -136,9 +136,11 @@ state_t *emscripten_init() {
 
   state->tank_1.was_shot = malloc(sizeof(bool));
   *state->tank_1.was_shot = false;
+  state->tank_1.points = 0;
 
   state->tank_2.was_shot = malloc(sizeof(bool));
   *state->tank_2.was_shot = false;
+  state->tank_2.points = 0;
 
   // create obstacles
   size_t num_obstacles_created = 0;
@@ -293,6 +295,13 @@ static void tank_dead(state_t *state, tank_t *tank) {
 
 void emscripten_main(state_t *state) {
   double dt = time_since_last_tick();
+
+  image_t *tile = image_load("tileSand1_big");
+  vector_t pos = vec_multiply(0.5, SCREEN_SIZE);
+  double scale = 1.0;
+  double rot = 0.0;
+
+  scene_draw_image(state->scene, tile, pos, scale, rot);
 
   if (sdl_get_key_pressed(UP_ARROW)) {
     vector_t force = vec_rotate((vector_t){TANK_FORCE, 0.0},

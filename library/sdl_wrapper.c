@@ -215,6 +215,23 @@ void sdl_render_scene(scene_t *scene) {
   sdl_clear();
   vector_t window_center = get_window_center();
 
+  // draw images
+  list_t *images_to_draw = scene_get_images_to_draw(scene);
+  size_t images_to_draw_len = list_size(images_to_draw);
+  for (size_t i = 0; i < images_to_draw_len; i++) {
+    image_to_draw_t *to_draw = list_remove(images_to_draw, 0);
+    vector_t centroid_window = get_window_position(to_draw->pos, window_center);
+    SDL_FRect dstrect;
+    dstrect.h = to_draw->scale * to_draw->image->h;
+    dstrect.w = to_draw->scale * to_draw->image->w;
+    SDL_FPoint center;
+    center.x = dstrect.w / 2.0;
+    center.y = dstrect.h / 2.0;
+    dstrect.x = centroid_window.x - center.x;
+    dstrect.y = centroid_window.y - center.y;
+    SDL_RenderCopyExF(renderer, to_draw->image->texture, NULL, &dstrect, -to_draw->rotation / PI * 180.0, &center, 0);
+
+  // draw bodies
   size_t body_count = scene_bodies(scene);
   for (size_t i = 0; i < body_count; i++) {
     body_t *body = scene_get_body(scene, i);
@@ -240,12 +257,14 @@ void sdl_render_scene(scene_t *scene) {
     }
   }
 
+  // draw text
   list_t *texts_to_draw = scene_get_texts_to_draw(scene);
   size_t texts_to_draw_len = list_size(texts_to_draw);
   for (size_t i = 0; i < texts_to_draw_len; i++) {
     text_to_draw_t *to_draw = list_remove(texts_to_draw, 0);;
     font_render(to_draw->text, get_window_position(to_draw->top_left, window_center), to_draw->color);
     scene_text_to_draw_free(to_draw);
+  }
   }
   sdl_show();
 }

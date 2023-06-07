@@ -3,12 +3,20 @@
 
 #include "body.h"
 #include "list.h"
+#include "image.h"
 
 typedef struct {
   const char *text;
   vector_t top_left;
   rgb_color_t color;
 } text_to_draw_t;
+
+typedef struct {
+  image_t *image;
+  vector_t pos;
+  double scale;
+  double rotation;
+} image_to_draw_t;
 
 /**
  * A collection of bodies and force creators.
@@ -118,6 +126,8 @@ void scene_tick(scene_t *scene, double dt);
 
 void scene_draw_text(scene_t *scene, const char *text, vector_t top_left, rgb_color_t color);
 list_t *scene_get_texts_to_draw(scene_t *scene);
+void scene_draw_image(scene_t *scene, image_t *image, vector_t pos, double scale, double rotation);
+list_t *scene_get_images_to_draw(scene_t *scene);
 void scene_text_to_draw_free(text_to_draw_t *text_to_draw);
 
 #endif // #ifndef __SCENE_H__
