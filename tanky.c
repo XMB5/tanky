@@ -297,6 +297,7 @@ static void shoot_bullet(state_t *state, tank_t *tank) {
 static void clear_bullets (state_t *state) {
   size_t num_bodies = scene_bodies(state->scene);
   for (size_t i = 0; i < num_bodies; i++) {
+    body_t *body = scene_get_body(state->scene, i);
     if (body->type == BODY_TYPE_BULLET) {
       body_remove(body);
     }
@@ -321,8 +322,8 @@ static void reset (state_t *state) {
   map_reset_obstacles(state->scene, SCREEN_SIZE, NUM_OBSTACLES);
 
   // Resets players and bullets
-  tank_dead(state, state->tank_1);
-  tank_dead(state, state->tank_2);
+  tank_dead(state, &state->tank_1);
+  tank_dead(state, &state->tank_2);
 }
 
 void emscripten_main(state_t *state) {
