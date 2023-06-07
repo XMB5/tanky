@@ -428,6 +428,8 @@ void emscripten_main(state_t *state) {
     if(!just_reset){
       reset(state);
       just_reset = true;
+      state->tank_1.points = 0;
+      state->tank_2.points = 0;
 
     }
   }
