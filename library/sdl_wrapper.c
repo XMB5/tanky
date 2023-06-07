@@ -214,6 +214,7 @@ void sdl_show(void) {
 void sdl_render_scene(scene_t *scene) {
   sdl_clear();
   vector_t window_center = get_window_center();
+  double window_scale = get_scene_scale(window_center);
 
   // draw images
   list_t *images_to_draw = scene_get_images_to_draw(scene);
@@ -222,8 +223,8 @@ void sdl_render_scene(scene_t *scene) {
     image_to_draw_t *to_draw = list_remove(images_to_draw, 0);
     vector_t centroid_window = get_window_position(to_draw->pos, window_center);
     SDL_FRect dstrect;
-    dstrect.h = to_draw->scale * to_draw->image->h;
-    dstrect.w = to_draw->scale * to_draw->image->w;
+    dstrect.h = to_draw->scale * window_scale * to_draw->image->h;
+    dstrect.w = to_draw->scale * window_scale * to_draw->image->w;
     SDL_FPoint center;
     center.x = dstrect.w / 2.0;
     center.y = dstrect.h / 2.0;
@@ -244,11 +245,11 @@ void sdl_render_scene(scene_t *scene) {
       double scale = body_get_image_scale(body);
       vector_t offset = body_get_image_offset(body);
       SDL_FRect dstrect;
-      dstrect.h = scale * image->h;
-      dstrect.w = scale * image->w;
+      dstrect.h = scale * window_scale * image->h;
+      dstrect.w = scale * window_scale * image->w;
       SDL_FPoint center;
-      center.x = dstrect.w / 2.0 + scale * offset.x;
-      center.y = dstrect.h / 2.0 + scale * -offset.y;  // negative because screen space uses opposite convention
+      center.x = dstrect.w / 2.0 + scale * window_scale * offset.x;
+      center.y = dstrect.h / 2.0 + scale * window_scale * -offset.y;  // negative because screen space uses opposite convention
       dstrect.x = centroid_window.x - center.x;
       dstrect.y = centroid_window.y - center.y;
       double rot = body_get_angle(body) + body_get_image_rotation(body);
