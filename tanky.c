@@ -250,23 +250,26 @@ static void shoot_bullet(state_t *state, tank_t *tank) {
 
   tank->shot_cooldown = SHOOT_INTERVAL;
   if (tank == &state->tank_1) {
-    create_bullet_collision(state->scene, state->tank_2.body, bullet,
+    create_bullet_tank_collision(state->scene, state->tank_2.body, bullet,
                             state->tank_2.health, state->tank_2.was_shot);
     create_newtonian_gravity(state->scene, BULLET_GRAVITY, state->tank_2.body,
                              bullet);
   } else if (tank == &state->tank_2) {
-    create_bullet_collision(state->scene, state->tank_1.body, bullet,
+    create_bullet_tank_collision(state->scene, state->tank_1.body, bullet,
                             state->tank_1.health, state->tank_1.was_shot);
     create_newtonian_gravity(state->scene, BULLET_GRAVITY, state->tank_1.body,
                              bullet);
   }
 
-  // wall collisions
+  // wall and obstacle collisions
   size_t num_bodies = scene_bodies(state->scene);
   for (size_t i = 0; i < num_bodies; i++) {
     body_t *body = scene_get_body(state->scene, i);
     if (body->type == BODY_TYPE_WALL) {
       create_physics_collision(state->scene, BULLET_ELASTICITY, body, bullet);
+    }
+    if (body->type == BODY_TYPE_OBSTACLE) {
+      create_bullet_obstacle_collision(state->scene, body, bullet);
     }
   }
   scene_add_body(state->scene, bullet);

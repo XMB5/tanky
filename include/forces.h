@@ -101,7 +101,19 @@ void create_destructive_collision(scene_t *scene, body_t *body1, body_t *body2);
  * @param health a pointer to the tank's health
  * @param was_shot a bool pointer to the tank's was_shot 
  */
-void create_bullet_collision(scene_t *scene, body_t *tank, body_t *bullet, size_t *health, bool *was_shot) ;
+void create_bullet_tank_collision(scene_t *scene, body_t *tank, body_t *bullet, size_t *health, bool *was_shot);
+
+/**
+ * Adds a force creator to a scene that destroys a bullet when it collides with an obstacle
+ * The bullet should be destroyed by calling body_remove().
+ * This should be represented as an on-collision callback
+ * registered with create_collision().
+ *
+ * @param scene the scene containing the bodies
+ * @param tank the tank that the bullet targets
+ * @param bullet a bullet
+ */
+void create_bullet_obstacle_collision(scene_t *scene, body_t *tank, body_t *bullet);
 
 /**
  * Adds a force creator to a scene that applies impulses
