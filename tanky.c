@@ -249,6 +249,7 @@ static void shoot_bullet(state_t *state, tank_t *tank) {
   double angle = body_get_angle(tank->body);
   double bullet_offset = TANK_SIZE.y * BULLET_OFFSET_RATIO / 2;
   bullet->info = malloc_safe(sizeof(size_t));
+  bullet->freer = free;
   *(size_t*) bullet->info = 0;
   double bullet_x =
       body_get_centroid(tank->body).x + (cos(angle) * bullet_offset);
