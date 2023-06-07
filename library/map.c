@@ -57,8 +57,8 @@ void map_add_walls(scene_t *scene, vector_t screen_size) {
   scene_add_body(scene, right_wall);
 
   vector_t wall_positions[NUM_INTERIOR_WALLS] = {
-      {.x = 150, .y = 100}, {.x = 850, .y = 100}, {.x = 150, .y = 400},
-      {.x = 850, .y = 400}, {.x = 350, .y = 250}, {.x = 700, .y = 250},
+      {.x = 150, .y = 100}, {.x = 825, .y = 100}, {.x = 150, .y = 400},
+      {.x = 825, .y = 400}, {.x = 350, .y = 250}, {.x = 710, .y = 250},
       {.x = 500, .y = 100}, {.x = 500, .y = 400}};
 
   vector_t wall_sizes[NUM_INTERIOR_WALLS] = {
