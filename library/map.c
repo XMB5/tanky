@@ -2,7 +2,8 @@
 #include <util.h>
 #include <shape.h>
 
-static const vector_t INTERIOR_WALL_SIZE = {50.0, 200.0};
+static const vector_t SMALL_INTERIOR_WALL_SIZE = {50.0, 200.0};
+static const vector_t LARGE_INTERIOR_WALL_SIZE = {50.0, 300.0};
 static const double EXTERIOR_WALL_THICKNESS = 100.0;
 static const rgb_color_t WALL_COLOR = {1.0, 1.0, 1.0};
 static const size_t NUM_BOUNDARIES = 4;
@@ -49,16 +50,22 @@ void map_add_walls(scene_t *scene, vector_t screen_size) {
 
   vector_t wall_positions[NUM_INTERIOR_WALLS] = {
       {.x = 150, .y = 100}, {.x = 850, .y = 100}, {.x = 150, .y = 400},
-      {.x = 850, .y = 400}, {.x = 350, .y = 250}, {.x = 650, .y = 250},
-      {.x = 500, .y = 100}, {.x = 500, .y = 400}, {.x = 750, .y = 250}};
+      {.x = 850, .y = 400}, {.x = 350, .y = 250}, {.x = 700, .y = 250},
+      {.x = 500, .y = 100}, {.x = 500, .y = 400}};
+
+  vector_t wall_sizes[NUM_INTERIOR_WALLS] = {
+      SMALL_INTERIOR_WALL_SIZE, SMALL_INTERIOR_WALL_SIZE, SMALL_INTERIOR_WALL_SIZE,
+      SMALL_INTERIOR_WALL_SIZE, SMALL_INTERIOR_WALL_SIZE, SMALL_INTERIOR_WALL_SIZE,
+      LARGE_INTERIOR_WALL_SIZE, SMALL_INTERIOR_WALL_SIZE
+  };
 
   int rotations[] = {0, 1, 0, 1, 0,
-                     1, 0, 1, 1}; // 0 for vertical, 1 for horizontal
+                     1, 0, 1}; // 0 for vertical, 1 for horizontal
 
     // Generate walls
   for (size_t i = 0; i < NUM_INTERIOR_WALLS; i++) {
     body_t *interior_wall =
-        body_init_with_info(shape_rectangle(INTERIOR_WALL_SIZE), INFINITY, WALL_COLOR, BODY_TYPE_WALL);
+        body_init_with_info(shape_rectangle(wall_sizes[i]), INFINITY, WALL_COLOR, BODY_TYPE_WALL);
 
     body_set_centroid(interior_wall, wall_positions[i]);
 
