@@ -13,7 +13,25 @@
  * Bodies can accumulate forces and impulses during each tick.
  * Angular physics (i.e. torques) are not currently implemented.
  */
-typedef struct body body_t;
+typedef struct {
+  list_t *shape;
+  double mass;
+  rgb_color_t color;
+  vector_t vel;
+  vector_t pos;
+  double angular_vel;
+  double angle;
+  vector_t net_force;
+  vector_t net_impulse;
+  void *info;
+  free_func_t freer;
+  bool removed;
+  image_t *image;
+  double image_scale;
+  double image_rotation;
+  vector_t image_offset;
+  const char *type;
+} body_t;
 
 /**
  * Initializes a body without any info.
@@ -34,8 +52,7 @@ body_t *body_init(list_t *shape, double mass, rgb_color_t color);
  * @param info_freer if non-NULL, a function call on the info to free it
  * @return a pointer to the newly allocated body
  */
-body_t *body_init_with_info(list_t *shape, double mass, rgb_color_t color,
-                            void *info, free_func_t info_freer);
+body_t *body_init_with_info(list_t *shape, double mass, rgb_color_t color, const char *type);
 
 /**
  * Releases the memory allocated for a body.

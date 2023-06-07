@@ -8,31 +8,11 @@
 #include <vector.h>
 #include <image.h>
 
-struct body {
-  list_t *shape;
-  double mass;
-  rgb_color_t color;
-  vector_t vel;
-  vector_t pos;
-  double angular_vel;
-  double angle;
-  vector_t net_force;
-  vector_t net_impulse;
-  void *info;
-  free_func_t freer;
-  bool removed;
-  image_t *image;
-  double image_scale;
-  double image_rotation;
-  vector_t image_offset;
-};
-
 body_t *body_init(list_t *shape, double mass, rgb_color_t color) {
-  return body_init_with_info(shape, mass, color, NULL, NULL);
+  return body_init_with_info(shape, mass, color, NULL);
 }
 
-body_t *body_init_with_info(list_t *shape, double mass, rgb_color_t color,
-                            void *info, free_func_t freer) {
+body_t *body_init_with_info(list_t *shape, double mass, rgb_color_t color, const char *type) {
   body_t *body = malloc_safe(sizeof(body_t));
   body->shape = shape;
   body->mass = mass;
@@ -43,10 +23,11 @@ body_t *body_init_with_info(list_t *shape, double mass, rgb_color_t color,
   body->angle = 0.0;
   body->net_force = VEC_ZERO;
   body->net_impulse = VEC_ZERO;
-  body->info = info;
-  body->freer = freer;
+  body->info = NULL;
+  body->freer = NULL;
   body->removed = false;
   body->image = NULL;
+  body->type = type;
   return body;
 }
 
