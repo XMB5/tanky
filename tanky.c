@@ -33,7 +33,7 @@ static const char *BODY_TYPE_BULLET = "bullet";
 static const char *BODY_TYPE_TANK = "tank";
 static const char *BODY_TYPE_OBSTACLE = "obstacle";
 
-static const vector_t TANK_SIZE = {40.0, 30.0};
+static const vector_t TANK_SIZE = {40.0, 40.0};
 static const double TANK_MASS = 10.0;
 static const double TANK_DRAG =
     200.0; // very high drag, so slows down almost instantly
