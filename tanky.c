@@ -49,16 +49,16 @@ static const size_t POINTS_PER_BULLET = 1;
 
 static const size_t HEALTH_BAR_MAX_POINTS = 10;
 static const double HEALTH_BAR_UNIT_LENGTH = 5.0;
-static const double HEALTH_BAR_HEIGHT = 1.0;
+static const double HEALTH_BAR_HEIGHT = 3.0;
 static const double HEALTH_BAR_MASS = 1.0;
 static const vector_t HEALTH_BAR_TANK_OFFSET = {0.0, 40.0};
-static const rgb_color_t HEALTH_BAR_COLOR = {0.0, 1.0, 0.0};
+static const rgb_color_t HEALTH_BAR_COLOR = {0.0, .76, 0.0};
 
 static const vector_t OBSTACLE_SIZE = {25.0, 25.0};
 static const int NUM_OBSTACLES = 10;
-static const double OBSTACLE_MASS = 300.0;
+static const double OBSTACLE_MASS = 400.0;
 static const double OBSTACLE_ELASTICITY = 0.7;
-static const double SHOOT_INTERVAL = 1.5; // sec
+static const double SHOOT_INTERVAL = 1.35; // sec
 
 static const rgb_color_t TEXT_COLOR = {0.392, 0.584, 0.929};
 
@@ -96,6 +96,7 @@ state_t *emscripten_init() {
       shape_rectangle(TANK_SIZE), TANK_MASS, COLOR_WHITE, BODY_TYPE_TANK);
   body_set_centroid(state->tank_1.body, TANK1_INITIAL_POSITION);
   body_set_centroid(state->tank_2.body, TANK2_INITIAL_POSITION);
+  body_set_rotation(state->tank_2.body, PI);
   body_set_image(state->tank_1.body, "tank_red", .5);
   body_set_image(state->tank_2.body, "tank_blue", .5);
   body_set_image_rotation(state->tank_1.body, PI / 2);
