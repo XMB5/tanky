@@ -3,3 +3,4 @@ Tanky: An exhilarating two-player tank battle game with a physics engine, set in
 Controls:
 - Red Tank: WASD, E to shoot
 - Blue Tank: Arrow Keys, `/` to shoot
+- U to reset
