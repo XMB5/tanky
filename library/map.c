@@ -1,13 +1,13 @@
 #include <map.h>
-#include <util.h>
 #include <shape.h>
+#include <util.h>
 
 static const vector_t SMALL_INTERIOR_WALL_SIZE = {50.0, 200.0};
 static const vector_t LARGE_INTERIOR_WALL_SIZE = {50.0, 300.0};
 static const double EXTERIOR_WALL_THICKNESS = 100.0;
 static const rgb_color_t WALL_COLOR = {1.0, 1.0, 1.0};
 static const size_t NUM_BOUNDARIES = 4;
-static const size_t NUM_INTERIOR_WALLS = 9;
+static const size_t NUM_INTERIOR_WALLS = 8;
 
 const char *BODY_TYPE_WALL = "wall";
 
@@ -54,18 +54,18 @@ void map_add_walls(scene_t *scene, vector_t screen_size) {
       {.x = 500, .y = 100}, {.x = 500, .y = 400}};
 
   vector_t wall_sizes[NUM_INTERIOR_WALLS] = {
-      SMALL_INTERIOR_WALL_SIZE, SMALL_INTERIOR_WALL_SIZE, SMALL_INTERIOR_WALL_SIZE,
-      SMALL_INTERIOR_WALL_SIZE, SMALL_INTERIOR_WALL_SIZE, SMALL_INTERIOR_WALL_SIZE,
-      LARGE_INTERIOR_WALL_SIZE, SMALL_INTERIOR_WALL_SIZE
-  };
+      SMALL_INTERIOR_WALL_SIZE, SMALL_INTERIOR_WALL_SIZE,
+      SMALL_INTERIOR_WALL_SIZE, SMALL_INTERIOR_WALL_SIZE,
+      SMALL_INTERIOR_WALL_SIZE, SMALL_INTERIOR_WALL_SIZE,
+      LARGE_INTERIOR_WALL_SIZE, SMALL_INTERIOR_WALL_SIZE};
 
-  int rotations[] = {0, 1, 0, 1, 0,
-                     1, 0, 1}; // 0 for vertical, 1 for horizontal
+  int rotations[] = {0, 1, 0, 1,
+                     0, 1, 0, 1}; // 0 for vertical, 1 for horizontal
 
-    // Generate walls
+  // Generate walls
   for (size_t i = 0; i < NUM_INTERIOR_WALLS; i++) {
-    body_t *interior_wall =
-        body_init_with_info(shape_rectangle(wall_sizes[i]), INFINITY, WALL_COLOR, BODY_TYPE_WALL);
+    body_t *interior_wall = body_init_with_info(
+        shape_rectangle(wall_sizes[i]), INFINITY, WALL_COLOR, BODY_TYPE_WALL);
 
     body_set_centroid(interior_wall, wall_positions[i]);
 
