@@ -272,13 +272,13 @@ static void shoot_bullet(state_t *state, tank_t *tank) {
                                  state->tank_2.health, state->tank_2.was_shot);
     create_newtonian_gravity(state->scene, BULLET_GRAVITY, state->tank_2.body,
                              bullet);
-    body_set_image(bullet, "barrelBlack_top", .28);
+    body_set_image(bullet, "barrelBlack_top", .28); // actually red
   } else if (tank == &state->tank_2) {
     create_bullet_tank_collision(state->scene, state->tank_1.body, bullet,
                                  state->tank_1.health, state->tank_1.was_shot);
     create_newtonian_gravity(state->scene, BULLET_GRAVITY, state->tank_1.body,
                              bullet);
-    body_set_image(bullet, "barrelRust_top", .28);
+    body_set_image(bullet, "barrelBlue_top", .28);
   }
 
   // wall and obstacle collisions

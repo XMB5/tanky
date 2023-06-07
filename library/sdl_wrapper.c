@@ -185,7 +185,7 @@ void sdl_draw_polygon(list_t *points, rgb_color_t color) {
     SDL_Vertex vertices[] = {vertices_poly[0], vertices_poly[1], vertices_poly[2], vertices_poly[2], vertices_poly[3], vertices_poly[0]};
 
     if (SDL_RenderGeometry(renderer, NULL, vertices, 6, NULL, 0) < 0) {
-      printf("render geometry failed %s\n", n, SDL_GetError());
+      printf("render geometry failed %s\n", SDL_GetError());
     }
   } else {
     printf("unimplemented rendering n=%zu sided polygon\n", n);
