@@ -58,7 +58,7 @@ static const rgb_color_t HEALTH_BAR_COLOR = {0.0, 1.0, 0.0};
 static const vector_t OBSTACLE_SIZE = {25.0, 25.0};
 static const int NUM_OBSTACLES = 10;
 static const double OBSTACLE_MASS = 100.0;
-static const double OBSTACLE_ELASTICITY = 0.01;
+static const double OBSTACLE_ELASTICITY = 0.7;
 
 static const double SHOOT_INTERVAL = 1.5; // sec
 
@@ -98,8 +98,6 @@ state_t *emscripten_init() {
       shape_rectangle(TANK_SIZE), TANK_MASS, COLOR_WHITE, BODY_TYPE_TANK);
   body_set_centroid(state->tank_1.body, TANK1_INITIAL_POSITION);
   body_set_centroid(state->tank_2.body, TANK2_INITIAL_POSITION);
-  scene_add_body(state->scene, state->tank_1.body);
-  scene_add_body(state->scene, state->tank_2.body);
   body_set_image(state->tank_1.body, "tank_red", .5);
   body_set_image(state->tank_2.body, "tank_blue", .5);
   body_set_image_rotation(state->tank_1.body, PI / 2);
@@ -151,9 +149,13 @@ state_t *emscripten_init() {
     body_t *obstacle =
         body_init_with_info(shape_rectangle(OBSTACLE_SIZE), OBSTACLE_MASS,
                             COLOR_WHITE, BODY_TYPE_OBSTACLE);
+    const char *barricadeImages[] = {"barricadeWood", "barricadeMetal", "crateWood"};
+    const char *barricadeImage = barricadeImages[rand() % 3];
+    body_set_image(obstacle, barricadeImage, 0.5);
     body_set_centroid(obstacle, (vector_t){x_coord, y_coord});
     list_add(obstacles, obstacle);
     scene_add_body(state->scene, obstacle);
+    create_drag(state->scene, 500.0, obstacle);
 
     size_t num_bodies = scene_bodies(state->scene);
 
@@ -177,6 +179,9 @@ state_t *emscripten_init() {
       num_obstacles_created++;
     }
   }
+
+  scene_add_body(state->scene, state->tank_1.body);
+  scene_add_body(state->scene, state->tank_2.body);
 
   size_t num_bodies = scene_bodies(state->scene);
 
