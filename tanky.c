@@ -25,7 +25,7 @@ static const double BULLET_ELASTICITY = 1.0;
 static const double BULLET_RADIUS = 5.0;
 static const double BULLET_OFFSET_RATIO = 1.25;
 static const double BULLET_SPEED = 300.0;
-static const double BULLET_GRAVITY = 100000.0;
+static const double BULLET_GRAVITY = 150000.0;
 static const char *BODY_TYPE_BULLET = "bullet";
 static const char *BODY_TYPE_TANK = "tank";
 
@@ -72,6 +72,17 @@ struct state {
   list_t *bullets; // list of bullet_t bullets
 };
 
+//tank creation 
+static void create_tank(state_t *state, tank_t *tank, vector_t pos, char *type){
+  tank->body = body_init_with_info(
+      shape_rectangle(TANK_SIZE), TANK_MASS, COLOR_WHITE, BODY_TYPE_TANK);
+  body_set_centroid(tank->body, pos);
+  body_set_image(tank->body, type, .5);
+  body_set_image_rotation(tank->body, PI / 2);
+  body_set_image_offset(tank->body, TANK_IMAGE_OFFSET);
+  create_drag(state->scene, TANK_DRAG, tank->body);
+}
+
 state_t *emscripten_init() {
   sdl_init(VEC_ZERO, SCREEN_SIZE);
   image_init();
@@ -82,23 +93,12 @@ state_t *emscripten_init() {
   state_t *state = malloc_safe(sizeof(state_t));
   state->scene = scene_init();
 
-  // create tanks
-  state->tank_1.body = body_init_with_info(
-      shape_rectangle(TANK_SIZE), TANK_MASS, COLOR_WHITE, BODY_TYPE_TANK);
-  state->tank_2.body = body_init_with_info(
-      shape_rectangle(TANK_SIZE), TANK_MASS, COLOR_WHITE, BODY_TYPE_TANK);
-  body_set_centroid(state->tank_1.body, TANK1_INITIAL_POSITION);
-  body_set_centroid(state->tank_2.body, TANK2_INITIAL_POSITION);
+  // creating the tanks
+  create_tank(state, &state->tank_1, TANK1_INITIAL_POSITION, "tank_red");
+  create_tank(state, &state->tank_2, TANK2_INITIAL_POSITION, "tank_blue");
   body_set_rotation(state->tank_2.body, PI);
-  body_set_image(state->tank_1.body, "tank_red", .5);
-  body_set_image(state->tank_2.body, "tank_blue", .5);
-  body_set_image_rotation(state->tank_1.body, PI / 2);
-  body_set_image_rotation(state->tank_2.body, PI / 2);
-  body_set_image_offset(state->tank_1.body, TANK_IMAGE_OFFSET);
-  body_set_image_offset(state->tank_2.body, TANK_IMAGE_OFFSET);
-  create_drag(state->scene, TANK_DRAG, state->tank_1.body);
-  create_drag(state->scene, TANK_DRAG, state->tank_2.body);
-
+  scene_add_body(state->scene, state->tank_1.body);
+  scene_add_body(state->scene, state->tank_2.body);
   map_add_walls(state->scene, SCREEN_SIZE);
 
   // create health bars
@@ -135,48 +135,7 @@ state_t *emscripten_init() {
   state->tank_2.points = 0;
 
   map_init_obstacles(state->scene, SCREEN_SIZE, NUM_OBSTACLES);
-  // // create obstacles
-  // size_t num_obstacles_created = 0;
-  // list_t *obstacles = list_init(NUM_OBSTACLES, free);
-  // while (num_obstacles_created < NUM_OBSTACLES) {
-  //   double x_coord = rand_range(0, SCREEN_SIZE.x);
-  //   double y_coord = rand_range(0, SCREEN_SIZE.y);
-  //   body_t *obstacle =
-  //       body_init_with_info(shape_rectangle(OBSTACLE_SIZE), OBSTACLE_MASS,
-  //                           COLOR_WHITE, BODY_TYPE_OBSTACLE);
-  //   const char *barricadeImages[] = {"barricadeWood", "barricadeMetal", "crateWood"};
-  //   const char *barricadeImage = barricadeImages[rand() % 3];
-  //   body_set_image(obstacle, barricadeImage, 0.5);
-  //   body_set_centroid(obstacle, (vector_t){x_coord, y_coord});
-  //   list_add(obstacles, obstacle);
-  //   scene_add_body(state->scene, obstacle);
-  //   create_drag(state->scene, 500.0, obstacle);
 
-  //   size_t num_bodies = scene_bodies(state->scene);
-
-  //   bool obstacle_collides = false;
-  //   for (size_t i = 0; i < num_bodies; i++) {
-  //     body_t *body = scene_get_body(state->scene, i);
-  //     if (body != obstacle) {
-  //       collision_info_t collision = body_collide(obstacle, body);
-  //       if (collision.collided) {
-  //         obstacle_collides = true;
-  //         break;
-  //       }
-  //     }
-  //   }
-
-  //   if (obstacle_collides) {
-  //     scene_remove_body(state->scene,
-  //                       num_bodies -
-  //                           1); // Remove newly placed obstacle, and try again
-  //   } else {
-  //     num_obstacles_created++;
-  //   }
-  // }
-
-  scene_add_body(state->scene, state->tank_1.body);
-  scene_add_body(state->scene, state->tank_2.body);
 
   size_t num_bodies = scene_bodies(state->scene);
 
@@ -288,10 +247,6 @@ static void shoot_bullet(state_t *state, tank_t *tank) {
   }
   scene_add_body(state->scene, bullet);
 
-  // Overlaying the bullet with an image
-  // body_set_image(scene->bullet, "bulletDark1_outline", .1);
-  // body_set_image_rotation(scene->bullet, angle);
-  // body_set_image_offset(scene->bullet, BULLET_IMAGE_OFFSET);
 }
 
 static void clear_bullets (state_t *state) {
@@ -440,13 +395,6 @@ void emscripten_main(state_t *state) {
   // char display_str[MAX_STR_SIZE];
   vector_t tank_1_coords = body_get_centroid(state->tank_1.body);
   vector_t tank_2_coords = body_get_centroid(state->tank_2.body);
-  // snprintf(display_str, MAX_STR_SIZE,
-  //          "tank coords: %f,%f\t blue tank points: %zu\t red tank points: "
-  //          "%zu\t",
-  //          tank_1_coords.x, tank_1_coords.y, state->tank_2.points,
-  //          state->tank_1.points);
-  // vector_t text_top_left = {20, 480};
-  // scene_draw_text(state->scene, display_str, text_top_left, COLOR_WHITE);
 
   char tank_1_points_str[MAX_STR_SIZE];
   snprintf(tank_1_points_str, MAX_STR_SIZE, "Red Tank Points: %zu",
