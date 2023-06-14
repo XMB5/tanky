@@ -59,7 +59,6 @@ typedef struct tank {
   body_t *body;
   size_t *health;
   body_t *health_bar; // body that represents health bar
-  list_t *powerups;
   double shot_cooldown;
   bool *was_shot;
   size_t points;
@@ -69,10 +68,8 @@ struct state {
   scene_t *scene;
   tank_t tank_1;
   tank_t tank_2;
-  list_t *bullets; // list of bullet_t bullets
 };
 
-//tank creation 
 static void create_tank(state_t *state, tank_t *tank, vector_t pos, char *type){
   tank->body = body_init_with_info(
       shape_rectangle(TANK_SIZE), TANK_MASS, COLOR_WHITE, BODY_TYPE_TANK);
@@ -99,10 +96,9 @@ state_t *emscripten_init() {
   body_set_rotation(state->tank_2.body, PI);
   scene_add_body(state->scene, state->tank_1.body);
   scene_add_body(state->scene, state->tank_2.body);
-  map_add_walls(state->scene, SCREEN_SIZE);
 
   // create health bars
-  size_t *health1 = malloc(sizeof(size_t)); // needs to be freed at some point
+  size_t *health1 = malloc(sizeof(size_t));
   *health1 = HEALTH_BAR_MAX_POINTS;
   state->tank_1.health = health1;
   vector_t health_bar_init_size = {
@@ -134,11 +130,12 @@ state_t *emscripten_init() {
   *state->tank_2.was_shot = false;
   state->tank_2.points = 0;
 
+  // add map and obstacles
+  map_add_walls(state->scene, SCREEN_SIZE);
   map_init_obstacles(state->scene, SCREEN_SIZE, NUM_OBSTACLES);
 
-
+  // add collisions
   size_t num_bodies = scene_bodies(state->scene);
-
   for (size_t i = 0; i < num_bodies; i++) {
     body_t *body_1 = scene_get_body(state->scene, i);
     bool body_1_is_tank = body_1->type == BODY_TYPE_TANK;
@@ -200,7 +197,6 @@ static void update_health_bar(state_t *state, tank_t *tank) {
 }
 
 static void shoot_bullet(state_t *state, tank_t *tank) {
-  
   sound_play("minigun");
   body_t *bullet =
       body_init_with_info(shape_circle_create(BULLET_RADIUS), BULLET_MASS,
@@ -249,7 +245,7 @@ static void shoot_bullet(state_t *state, tank_t *tank) {
 
 }
 
-static void clear_bullets (state_t *state) {
+static void clear_bullets(state_t *state) {
   size_t num_bodies = scene_bodies(state->scene);
   for (size_t i = 0; i < num_bodies; i++) {
     body_t *body = scene_get_body(state->scene, i);
@@ -285,16 +281,50 @@ static void reset (state_t *state) {
   state->tank_2.points = 0;
 }
 
+/**
+ * rotate, but don't allow rotating into a wall (would cause glitches)
+*/
+static void tank_rotate(state_t *state, tank_t *tank, double angular_vel, double dt) {
+  double dtheta = angular_vel * dt;
+  body_set_rotation(tank->body, tank->body->angle + dtheta);
+  size_t num_bodies = scene_bodies(state->scene);
+  for (size_t i = 0; i < num_bodies; i++) {
+    body_t *body = scene_get_body(state->scene, i);
+    if (body->type == BODY_TYPE_WALL) {
+      collision_info_t collision = find_collision(body->shape, tank->body->shape);
+      if (collision.collided) {
+        body_set_rotation(tank->body, tank->body->angle - dtheta);
+        break;
+      }
+    }
+  }
+}
+
+static void healthbar_update(state_t *state, tank_t *tank) {
+  vector_t tank_coords = body_get_centroid(tank->body);
+  body_set_centroid(tank->health_bar, vec_add(tank_coords, HEALTH_BAR_TANK_OFFSET));
+
+  if (*tank->was_shot) {
+    update_health_bar(state, tank);
+    *tank->was_shot = false;
+  }
+
+  if (*tank->health == 0 || *tank->health > HEALTH_BAR_MAX_POINTS) {
+    tank_dead(state, tank);
+  }
+}
+
 void emscripten_main(state_t *state) {
   double dt = time_since_last_tick();
 
-  image_t *tile = image_load("tileSand1_big");
+  // draw background image
+  image_t *tile = image_load("tileSand1_big"); // loads from cache
   vector_t pos = vec_multiply(0.5, SCREEN_SIZE);
   double scale = 1.0;
   double rot = 0.0;
-
   scene_draw_image(state->scene, tile, pos, scale, rot);
 
+  // tank forward/backward movement
   if (sdl_get_key_pressed(UP_ARROW)) {
     vector_t force = vec_rotate((vector_t){TANK_FORCE, 0.0},
                                 body_get_angle(state->tank_2.body));
@@ -303,48 +333,6 @@ void emscripten_main(state_t *state) {
     vector_t force = vec_rotate((vector_t){-TANK_FORCE, 0.0},
                                 body_get_angle(state->tank_2.body));
     body_add_force(state->tank_2.body, force);
-  }
-
-  double tank2_angular_vel = 0.0;
-  if (sdl_get_key_pressed(RIGHT_ARROW)) {
-    tank2_angular_vel = -TANK_ANGULAR_VEL;
-  } else if (sdl_get_key_pressed(LEFT_ARROW)) {
-    tank2_angular_vel = TANK_ANGULAR_VEL;
-  }
-
-  double tank2_dtheta = tank2_angular_vel * dt;
-  body_set_rotation(state->tank_2.body,
-                    state->tank_2.body->angle + tank2_dtheta);
-  size_t num_bodies = scene_bodies(state->scene);
-  for (size_t i = 0; i < num_bodies; i++) {
-    body_t *body = scene_get_body(state->scene, i);
-    if (body->type == BODY_TYPE_WALL) {
-      collision_info_t collision =
-          find_collision(body->shape, state->tank_2.body->shape);
-      if (collision.collided) {
-        body_set_rotation(state->tank_2.body,
-                          state->tank_2.body->angle - tank2_dtheta);
-        break;
-      }
-    }
-  }
-
-  // bullet shooting
-  if (state->tank_2.shot_cooldown > 0.0) {
-    state->tank_2.shot_cooldown -= dt;
-  }
-  if (sdl_get_key_pressed('/')) {
-    if (state->tank_2.shot_cooldown <= 0) {
-      shoot_bullet(state, &state->tank_2);
-    }
-  }
-  if (state->tank_1.shot_cooldown > 0.0) {
-    state->tank_1.shot_cooldown -= dt;
-  }
-  if (sdl_get_key_pressed('e')) {
-    if (state->tank_1.shot_cooldown <= 0) {
-      shoot_bullet(state, &state->tank_1);
-    }
   }
 
   if (sdl_get_key_pressed('s')) {
@@ -357,78 +345,55 @@ void emscripten_main(state_t *state) {
     body_add_force(state->tank_1.body, force);
   }
 
-  double tank1_angular_vel = 0.0;
+  // tank rotating
   if (sdl_get_key_pressed('d')) {
-    tank1_angular_vel = -TANK_ANGULAR_VEL;
+    tank_rotate(state, &state->tank_1, -TANK_ANGULAR_VEL, dt);
   } else if (sdl_get_key_pressed('a')) {
-    tank1_angular_vel = TANK_ANGULAR_VEL;
-  }
-  double tank1_dtheta = tank1_angular_vel * dt;
-  body_set_rotation(state->tank_1.body,
-                    state->tank_1.body->angle + tank1_dtheta);
-  for (size_t i = 0; i < num_bodies; i++) {
-    body_t *body = scene_get_body(state->scene, i);
-    if (body->type == BODY_TYPE_WALL) {
-      collision_info_t collision =
-          find_collision(body->shape, state->tank_1.body->shape);
-      if (collision.collided) {
-        body_set_rotation(state->tank_1.body,
-                          state->tank_1.body->angle - tank1_dtheta);
-        break;
-      }
-    }
+    tank_rotate(state, &state->tank_1, TANK_ANGULAR_VEL, dt);
   }
 
-  
+  if (sdl_get_key_pressed(RIGHT_ARROW)) {
+    tank_rotate(state, &state->tank_2, -TANK_ANGULAR_VEL, dt);
+  } else if (sdl_get_key_pressed(LEFT_ARROW)) {
+    tank_rotate(state, &state->tank_2, TANK_ANGULAR_VEL, dt);
+  }
+
+  // bullet shooting
+  state->tank_1.shot_cooldown -= dt;
+  if (sdl_get_key_pressed('e') && state->tank_1.shot_cooldown <= 0) {
+    shoot_bullet(state, &state->tank_1);
+  }
+  state->tank_2.shot_cooldown -= dt;
+  if (sdl_get_key_pressed('/') && state->tank_2.shot_cooldown <= 0) {
+    shoot_bullet(state, &state->tank_2);
+  }
+
+  // update health bars (includes tank death handling)
+  healthbar_update(state, &state->tank_1);
+  healthbar_update(state, &state->tank_2);
+
+  // points text display
+  const size_t MAX_STR_SIZE = 256;
+  char points_str[MAX_STR_SIZE];
+  snprintf(points_str, MAX_STR_SIZE, "Red Tank Points: %zu",
+           state->tank_1.points);
+  vector_t text_top_left = {200, 480};
+  scene_draw_text(state->scene, points_str, text_top_left, TEXT_COLOR);
+
+  snprintf(points_str, MAX_STR_SIZE, "Blue Tank Points: %zu",
+           state->tank_2.points);
+  vector_t text_top_right = {600, 480};
+  scene_draw_text(state->scene, points_str, text_top_right, TEXT_COLOR);
+
+  // reset button
   static bool just_reset = false;
   if (sdl_get_key_pressed('u')) {
     if(!just_reset){
       reset(state);
       just_reset = true;
     }
-  }
-  else{
+  } else {
       just_reset = false;
-  }
-
-  const size_t MAX_STR_SIZE = 256;
-  // char display_str[MAX_STR_SIZE];
-  vector_t tank_1_coords = body_get_centroid(state->tank_1.body);
-  vector_t tank_2_coords = body_get_centroid(state->tank_2.body);
-
-  char tank_1_points_str[MAX_STR_SIZE];
-  snprintf(tank_1_points_str, MAX_STR_SIZE, "Red Tank Points: %zu",
-           state->tank_1.points);
-  vector_t text_top_left = {200, 480};
-  scene_draw_text(state->scene, tank_1_points_str, text_top_left, TEXT_COLOR);
-
-  char tank_2_points_str[MAX_STR_SIZE];
-  snprintf(tank_2_points_str, MAX_STR_SIZE, "Blue Tank Points: %zu",
-           state->tank_2.points);
-  vector_t text_top_right = {600, 480};
-  scene_draw_text(state->scene, tank_2_points_str, text_top_right, TEXT_COLOR);
-
-  body_set_centroid(state->tank_1.health_bar,
-                    vec_add(tank_1_coords, HEALTH_BAR_TANK_OFFSET));
-  body_set_centroid(state->tank_2.health_bar,
-                    vec_add(tank_2_coords, HEALTH_BAR_TANK_OFFSET));
-
-  if (*state->tank_1.was_shot) {
-    update_health_bar(state, &state->tank_1);
-    *state->tank_1.was_shot = false;
-  }
-  if (*state->tank_2.was_shot) {
-    update_health_bar(state, &state->tank_2);
-    *state->tank_2.was_shot = false;
-  }
-
-  if (*state->tank_1.health == 0 ||
-      *state->tank_1.health > HEALTH_BAR_MAX_POINTS) {
-    tank_dead(state, &state->tank_1);
-  }
-  if (*state->tank_2.health == 0 ||
-      *state->tank_2.health > HEALTH_BAR_MAX_POINTS) {
-    tank_dead(state, &state->tank_2);
   }
 
   scene_tick(state->scene, dt);
