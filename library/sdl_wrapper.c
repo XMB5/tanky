@@ -173,8 +173,13 @@ void sdl_draw_polygon(list_t *points, rgb_color_t color) {
 
   vector_t window_center = get_window_center();
 
-  // we don't implement a general polygon->triangles algorithm, only for a rectangle
+  // we can't use sdl gfx because it is (theoretically) imcompatible with SDL_RenderCopy (used for image and text rendering)
+  // we thought it might be the reason that some images would (inconsistently) not render on some devices
+  // we think the true cause is a race condition in SDL_RenderCopy
+  
   if (n == 4) {
+    // we don't implement a general polygon->triangles algorithm
+    // our only polygon is the rectangular health bar
     SDL_Vertex vertices_poly[n];
     for (size_t i = 0; i < n; i++) {
       vector_t *vertex = list_get(points, i);

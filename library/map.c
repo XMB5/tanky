@@ -8,13 +8,11 @@ static const vector_t SMALL_INTERIOR_WALL_SIZE = {56.0, 224.0};
 static const vector_t LARGE_INTERIOR_WALL_SIZE = {56.0, 336.0};
 static const double EXTERIOR_WALL_THICKNESS = 100.0;
 static const rgb_color_t WALL_COLOR = {1.0, 1.0, 1.0};
-static const size_t NUM_BOUNDARIES = 4;
 static const size_t NUM_INTERIOR_WALLS = 8;
 
 static const vector_t OBSTACLE_SIZE = {25.0, 25.0};
 static const int NUM_OBSTACLES = 10;
 static const double OBSTACLE_MASS = 100.0;
-static const double OBSTACLE_ELASTICITY = 0.7;
 
 const char *BODY_TYPE_WALL = "wall";
 const char *BODY_TYPE_OBSTACLE = "obstacle";
@@ -56,19 +54,19 @@ void map_add_walls(scene_t *scene, vector_t screen_size) {
   body_set_centroid(right_wall, right_wall_centroid);
   scene_add_body(scene, right_wall);
 
-  vector_t wall_positions[NUM_INTERIOR_WALLS] = {
+  vector_t wall_positions[] = {
       {.x = 150, .y = 100}, {.x = 825, .y = 100}, {.x = 150, .y = 400},
       {.x = 825, .y = 400}, {.x = 350, .y = 250}, {.x = 710, .y = 250},
       {.x = 500, .y = 100}, {.x = 500, .y = 400}};
 
-  vector_t wall_sizes[NUM_INTERIOR_WALLS] = {
+  vector_t wall_sizes[] = {
       SMALL_INTERIOR_WALL_SIZE, SMALL_INTERIOR_WALL_SIZE,
       SMALL_INTERIOR_WALL_SIZE, SMALL_INTERIOR_WALL_SIZE,
       SMALL_INTERIOR_WALL_SIZE, SMALL_INTERIOR_WALL_SIZE,
       LARGE_INTERIOR_WALL_SIZE, SMALL_INTERIOR_WALL_SIZE};
 
-  int rotations[] = {0, 1, 0, 1,
-                     0, 1, 0, 1}; // 0 for vertical, 1 for horizontal
+  bool horizontal[] = {false, true, false, true,
+                       false, true, false, true}; // false for vertical, true for horizontal
 
   // Generate walls
   for (size_t i = 0; i < NUM_INTERIOR_WALLS; i++) {
@@ -82,7 +80,7 @@ void map_add_walls(scene_t *scene, vector_t screen_size) {
 
     body_set_centroid(interior_wall, wall_positions[i]);
 
-    body_set_rotation(interior_wall, (double)rotations[i] * PI / 2);
+    body_set_rotation(interior_wall, horizontal[i] ? (PI / 2.0) : 0.0);
 
     scene_add_body(scene, interior_wall);
   }

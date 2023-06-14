@@ -12,13 +12,18 @@ CLEAN_COMMAND = find out/ ! -name .gitkeep -type f -delete && \
 find bin/ ! -name .gitkeep -type f -delete
 
 # Compiling with asan (run 'make all' as normal)
-ifndef NO_ASAN
+ifndef NO_ASAN_FOR_REAL
+  # we really want asan, otherwise there is a glitch rendering some images
+  # why? we think there is a race condition in SDL_RenderCopy
+  # this glitch is platform-dependent, only happens on some computers
+  # (spent hours trying to figure out the root cause, still unsure)
+  # when running with asan there is usually no issue
   CFLAGS = -fsanitize=address
   ifeq ($(wildcard .debug),)
     $(shell $(CLEAN_COMMAND))
     $(shell touch .debug)
   endif
-# Compiling without asan (run 'make NO_ASAN=true all')
+# Compiling without asan (run 'make NO_ASAN_FOR_REAL=true all')
 else
   CFLAGS = -O3
   ifneq ($(wildcard .debug),)

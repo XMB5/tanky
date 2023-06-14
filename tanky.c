@@ -97,6 +97,9 @@ state_t *emscripten_init() {
   scene_add_body(state->scene, state->tank_1.body);
   scene_add_body(state->scene, state->tank_2.body);
 
+  // add walls
+  map_add_walls(state->scene, SCREEN_SIZE);
+
   // create health bars
   size_t *health1 = malloc(sizeof(size_t));
   *health1 = HEALTH_BAR_MAX_POINTS;
@@ -130,8 +133,7 @@ state_t *emscripten_init() {
   *state->tank_2.was_shot = false;
   state->tank_2.points = 0;
 
-  // add map and obstacles
-  map_add_walls(state->scene, SCREEN_SIZE);
+  // add obstacles
   map_init_obstacles(state->scene, SCREEN_SIZE, NUM_OBSTACLES);
 
   // add collisions
