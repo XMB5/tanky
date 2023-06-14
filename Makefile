@@ -14,8 +14,9 @@ find bin/ ! -name .gitkeep -type f -delete
 # Compiling with asan (run 'make all' as normal)
 ifndef NO_ASAN_FOR_REAL
   # we really want asan, otherwise there is a glitch rendering some images
-  # why? we think there is a race condition in SDL_RenderCopy
+  # why? we think there is a race condition in SDL_RenderCopy emscripten implementation
   # this glitch is platform-dependent, only happens on some computers
+  # seems to not happen when running natively (make native)
   # (spent hours trying to figure out the root cause, still unsure)
   # when running with asan there is usually no issue
   CFLAGS = -fsanitize=address
